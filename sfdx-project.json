@@ -9,7 +9,7 @@
       "default": false
     },
     {
-      "path": "force-app",
+      "path": "weather-app",
       "default": true
     }    
   ],

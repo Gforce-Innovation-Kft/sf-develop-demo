@@ -53,7 +53,7 @@ The application follows Martin Fowler's Enterprise Patterns as implemented in th
 ### 2. Deploy to Salesforce
 ```bash
 # Deploy the application
-sfdx force:source:deploy -p force-app -u [your-org-alias]
+sfdx force:source:deploy -p weather-app -u [your-org-alias]
 
 # Or push to scratch org
 sfdx force:source:push -u [your-scratch-org]
