@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Weather_Reports</fullName>
+    <columns>NAME</columns>
+    <columns>City__c</columns>
+    <columns>Temperature__c</columns>
+    <columns>Weather_Description__c</columns>
+    <columns>Report_Date_Time__c</columns>
+    <columns>CREATED_DATE</columns>
+    <filterScope>Everything</filterScope>
+    <label>All Weather Reports</label>
+    <language>en_US</language>
+</ListView>

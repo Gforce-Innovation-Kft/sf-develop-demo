@@ -71,6 +71,10 @@
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
     <tabSettings>
+        <tab>Weather</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
         <tab>Weather_Report__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
