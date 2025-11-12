@@ -1,31 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <applicationVisibilities>
+        <application>Weather_Dashboard_App</application>
+        <visible>true</visible>
+    </applicationVisibilities>
+    <classAccesses>
+        <apexClass>Application</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>IWeatherService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>WeatherDashboardController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>WeatherData</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>WeatherReports</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>WeatherReportsSelector</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>WeatherServiceImpl</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Full access to Weather Dashboard Demo application including Weather Reports, API callouts, and all related functionality</description>
-    <hasActivationRequired>false</hasActivationRequired>
-    <label>Weather Dashboard Demo Access</label>
-    
-    <!-- Object Permissions -->
-    <objectPermissions>
-        <allowCreate>true</allowCreate>
-        <allowDelete>true</allowDelete>
-        <allowEdit>true</allowEdit>
-        <allowRead>true</allowRead>
-        <modifyAllRecords>true</modifyAllRecords>
-        <object>Weather_Report__c</object>
-        <viewAllRecords>true</viewAllRecords>
-    </objectPermissions>
-    
-    <!-- Field Permissions -->
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Weather_Report__c.Temperature__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Weather_Report__c.Weather_Description__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
         <field>Weather_Report__c.Humidity__c</field>
@@ -41,41 +48,30 @@
         <field>Weather_Report__c.Report_Date_Time__c</field>
         <readable>true</readable>
     </fieldPermissions>
-    
-    <!-- Apex Class Access -->
-    <classAccesses>
-        <apexClass>Application</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>IWeatherService</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>WeatherData</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>WeatherServiceImpl</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>WeatherReports</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>WeatherReportsSelector</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>WeatherDashboardController</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    
-    <!-- Tab Access -->
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Weather_Report__c.Temperature__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Weather_Report__c.Weather_Description__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Weather Dashboard Demo Access</label>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <object>Weather_Report__c</object>
+        <viewAllFields>false</viewAllFields>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
     <tabSettings>
         <tab>Weather_Report__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
-    
 </PermissionSet>
