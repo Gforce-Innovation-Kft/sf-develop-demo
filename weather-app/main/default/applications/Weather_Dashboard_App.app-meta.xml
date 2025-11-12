@@ -32,5 +32,6 @@
     <label>Weather Dashboard</label>
     <navType>Standard</navType>
     <tabs>Weather_Report__c</tabs>
+    <tabs>Weather</tabs>
     <uiType>Lightning</uiType>
 </CustomApplication>

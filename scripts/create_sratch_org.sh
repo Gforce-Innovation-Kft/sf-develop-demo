@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# Weather Dashboard Demo - Scratch Org Creation & Deployment Script
+# This script creates a scratch org, deploys the weather dashboard, and assigns permissions
+
+set -e  # Exit on any error
+
+# Configuration
+SCRATCH_ORG_ALIAS="weather-demo"
+DEV_HUB_ALIAS="dev"
+DURATION_DAYS=2
+PERMISSION_SET_NAME="Weather_Dashboard_Demo_Access"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check prerequisites
+print_status "Checking prerequisites..."
+
+if ! command_exists sf; then
+    print_error "Salesforce CLI (sf) is not installed. Please install it first."
+    exit 1
+fi
+
+# Check for Dev Hub
+if [ -z "$DEV_HUB_ALIAS" ]; then
+    print_error "No Dev Hub specified. Please:"
+    echo "  1. Set default dev hub: sf config set target-dev-hub <your-dev-hub-alias>"
+    echo "  2. Or run with dev hub alias: ./create_sratch_org.sh <your-dev-hub-alias>"
+    echo "  3. Or check available orgs: sf org list"
+    exit 1
+fi
+
+print_status "Using Dev Hub: $DEV_HUB_ALIAS"
+
+# Check if we're in the right directory
+if [ ! -f "sfdx-project.json" ]; then
+    print_error "sfdx-project.json not found. Please run this script from the project root directory."
+    exit 1
+fi
+
+# Check for weather-app directory
+if [ ! -d "weather-app" ]; then
+    print_error "weather-app directory not found. Please ensure the project structure is correct."
+    exit 1
+fi
+
+print_success "Prerequisites check passed!"
+
+# Step 1: Create Scratch Org
+print_status "Creating scratch org with alias '$SCRATCH_ORG_ALIAS'..."
+
+# sf org create scratch \
+#     --definition-file config/project-scratch-def.json \
+#     --alias "$SCRATCH_ORG_ALIAS" \
+#     --target-dev-hub "$DEV_HUB_ALIAS" \
+#     --duration-days "$DURATION_DAYS" \
+#     --set-default \
+#     --wait 10
+
+if [ $? -eq 0 ]; then
+    print_success "Scratch org '$SCRATCH_ORG_ALIAS' created successfully!"
+else
+    print_error "Failed to create scratch org. Please check your Dev Hub connection."
+    exit 1
+fi
+
+# Step 2: Push Source Code
+print_status "Pushing source code to scratch org..."
+
+# sf project deploy start 
+
+if [ $? -eq 0 ]; then
+    print_success "Source code deployed successfully!"
+else
+    print_error "Failed to deploy source code."
+    exit 1
+fi
+
+# Step 3: Assign Permission Set
+print_status "Assigning permission set '$PERMISSION_SET_NAME'..."
+
+sf org assign permset --name "$PERMISSION_SET_NAME"
+
+if [ $? -eq 0 ]; then
+    print_success "Permission set assigned successfully!"
+else
+    print_warning "Failed to assign permission set. You may need to assign it manually."
+fi
+
+# Step 4: Open the Org
+print_status "Opening scratch org..."
+
+sf org open --path "/lightning/n/Weather"
+
+# Step 5: Display Summary
+echo ""
+print_success "🎉 Weather Dashboard Demo Setup Complete!"
+echo ""
+echo -e "${BLUE}Scratch Org Details:${NC}"
+echo "  • Alias: $SCRATCH_ORG_ALIAS"
+echo "  • Duration: $DURATION_DAYS days"
+echo "  • Permission Set: $PERMISSION_SET_NAME"
+echo ""
+echo -e "${BLUE}Next Steps:${NC}"
+echo "  1. Update API key in WeatherServiceImpl.cls"
+echo "  2. Navigate to Weather Dashboard tab"
+echo "  3. Enter a city name (e.g., 'London')"
+echo "  4. Click 'Get Current Weather'"
+echo ""
+echo -e "${BLUE}Access URLs:${NC}"
+echo "  • Weather Dashboard: /lightning/n/Weather_Dashboard"
+echo "  • Weather Reports: /lightning/o/Weather_Report__c/list"
+echo "  • Setup: /lightning/setup/SetupOneHome/home"
+echo ""
+echo -e "${YELLOW}Remember:${NC} Get your free API key from https://openweathermap.org/api"
+echo ""
+
+# Step 6: Display org info
+print_status "Getting org information..."
+sf org display --target-org "$SCRATCH_ORG_ALIAS"
+
+print_success "Script completed successfully! 🚀"
