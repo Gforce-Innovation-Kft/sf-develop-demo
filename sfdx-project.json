@@ -1,9 +1,17 @@
 {
-  "packageDirectories": [
+  "packageDirectories": [   
+    {
+      "path": "apex-mocks",
+      "default": false
+    },
+     {
+      "path": "apex-common",
+      "default": false
+    },
     {
       "path": "force-app",
       "default": true
-    }
+    }    
   ],
   "name": "sf-develop-demo",
   "namespace": "",
