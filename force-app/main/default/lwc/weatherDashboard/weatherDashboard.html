@@ -1,0 +1,147 @@
+<template>
+    <lightning-card title="Weather Dashboard" icon-name="utility:weather">
+        <div class="slds-p-around_medium">
+            
+            <!-- Search Section -->
+            <div class="slds-grid slds-wrap slds-gutters">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+                    <lightning-input 
+                        type="text" 
+                        label="City Name" 
+                        placeholder="Enter city name (e.g., London, New York)"
+                        value={cityName}
+                        onchange={handleCityNameChange}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <div class="slds-p-top_large">
+                        <lightning-button 
+                            variant="brand" 
+                            label="Get Current Weather"
+                            onclick={handleGetWeather}
+                            disabled={isGetWeatherDisabled}
+                            class="slds-m-left_x-small">
+                        </lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-p-around_medium slds-text-align_center">
+                    <lightning-spinner alternative-text="Loading weather data..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Current Weather Display -->
+            <template if:true={hasCurrentWeather}>
+                <div class="slds-p-top_medium">
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title slds-theme_shade">
+                            <span class="slds-truncate slds-p-horizontal_small" title="Current Weather">
+                                Current Weather for {currentWeather.city}
+                            </span>
+                        </h3>
+                        <div class="slds-section__content slds-p-around_medium">
+                            <div class="slds-grid slds-wrap slds-gutters">
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                    <div class="slds-text-heading_small">Temperature</div>
+                                    <div class="slds-text-body_regular">{currentWeather.temperatureFormatted}</div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                    <div class="slds-text-heading_small">Description</div>
+                                    <div class="slds-text-body_regular">{currentWeather.description}</div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                    <div class="slds-text-heading_small">Humidity</div>
+                                    <div class="slds-text-body_regular">{currentWeather.humidityFormatted}</div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                    <div class="slds-text-heading_small">Pressure</div>
+                                    <div class="slds-text-body_regular">{currentWeather.pressureFormatted}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Weather Reports for Selected City -->
+            <template if:true={hasWeatherReports}>
+                <div class="slds-p-top_medium">
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title slds-theme_shade">
+                            <span class="slds-truncate slds-p-horizontal_small" title="Weather Reports">
+                                Recent Reports for {cityName}
+                            </span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <div class="weather-reports-container">
+                                <template for:each={weatherReports} for:item="report">
+                                    <div key={report.id} class="slds-box slds-m-around_small">
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-4">
+                                                <div class="slds-grid slds-wrap slds-gutters">
+                                                    <div class="slds-col slds-size_1-of-3">
+                                                        <strong>{report.temperatureFormatted}</strong>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-3">
+                                                        {report.description}
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-3">
+                                                        {report.reportDateTimeFormatted}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-text-align_right">
+                                                <lightning-button
+                                                    variant="destructive"
+                                                    label="Delete"
+                                                    size="small"
+                                                    data-id={report.id}
+                                                    onclick={handleDeleteReport}>
+                                                </lightning-button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Recent Reports Across All Cities -->
+            <template if:true={hasRecentReports}>
+                <div class="slds-p-top_medium">
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title slds-theme_shade">
+                            <span class="slds-truncate slds-p-horizontal_small" title="Recent Reports">
+                                Recent Weather Reports (All Cities)
+                            </span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <lightning-datatable
+                                key-field="id"
+                                data={recentReports}
+                                columns={columns}
+                                hide-checkbox-column="true"
+                                show-row-number-column="false">
+                            </lightning-datatable>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- No Data Message -->
+            <template if:false={hasRecentReports}>
+                <div class="slds-p-top_medium slds-text-align_center">
+                    <div class="slds-text-body_regular slds-text-color_weak">
+                        No weather reports found. Enter a city name and click "Get Current Weather" to start.
+                    </div>
+                </div>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>

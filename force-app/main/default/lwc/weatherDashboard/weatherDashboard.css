@@ -1,0 +1,14 @@
+.weather-reports-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.slds-box {
+    background-color: var(--slds-g-color-neutral-base-95);
+    border: 1px solid var(--slds-g-color-border-base-4);
+}
+
+.slds-text-heading_small {
+    font-weight: bold;
+    color: var(--slds-g-color-neutral-base-50);
+}
