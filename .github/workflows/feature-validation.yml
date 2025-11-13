@@ -1,16 +1,42 @@
 name: Feature Branch Validation
 
 on:
+  # Manual trigger with input options
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Target branch to validate'
+        required: false
+        default: 'develop'
+        type: choice
+        options:
+          - develop
+          - main
+      scratch_org_duration:
+        description: 'Scratch org duration (days)'
+        required: false
+        default: '1'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '7'
+      run_tests:
+        description: 'Run Apex tests'
+        required: false
+        default: true
+        type: boolean
+      deploy_only:
+        description: 'Deploy only (skip tests and validation)'
+        required: false
+        default: false
+        type: boolean
+
+  # Trigger on PR events (only when opened or reopened)
   pull_request:
+    types: [opened, reopened]
     branches: [ main, develop ]
-    paths:
-      - 'weather-app/**'
-      - 'apex-common/**'
-      - 'apex-mocks/**'
-      - 'sfdx-project.json'
-      - 'config/**'
-  push:
-    branches: [ feature/*, bugfix/*, hotfix/* ]
     paths:
       - 'weather-app/**'
       - 'apex-common/**'
@@ -19,21 +45,40 @@ on:
       - 'config/**'
 
 env:
-  SCRATCH_ORG_ALIAS: pr-validation-${{ github.run_number }}
+  SCRATCH_ORG_ALIAS: ${{ github.event_name == 'workflow_dispatch' && format('manual-{0}', github.run_number) || format('pr-validation-{0}', github.run_number) }}
   DEV_HUB_ALIAS: devhub
   SFDX_DISABLE_DNS_CHECK: true
+  SCRATCH_ORG_DURATION: ${{ github.event.inputs.scratch_org_duration || '1' }}
+  RUN_TESTS: ${{ github.event.inputs.run_tests != 'false' }}
+  DEPLOY_ONLY: ${{ github.event.inputs.deploy_only == 'true' }}
 
 jobs:
   validate-feature:
     name: Validate Feature Branch
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: [code-quality]
+    if: always() && (needs.code-quality.result == 'success' || needs.code-quality.result == 'skipped')
     
     steps:
       - name: 🔄 Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: 📋 Display Workflow Context
+        run: |
+          echo "## 🚀 Workflow Execution Context" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scratch Org:** ${{ env.SCRATCH_ORG_ALIAS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Duration:** ${{ env.SCRATCH_ORG_DURATION }} day(s)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Tests:** ${{ env.RUN_TESTS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy Only:** ${{ env.DEPLOY_ONLY }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "- **Manual Trigger by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Branch:** ${{ github.event.inputs.target_branch || 'develop' }}" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
@@ -70,7 +115,7 @@ jobs:
             --definition-file config/project-scratch-def.json \
             --alias ${{ env.SCRATCH_ORG_ALIAS }} \
             --target-dev-hub ${{ env.DEV_HUB_ALIAS }} \
-            --duration-days 1 \
+            --duration-days ${{ env.SCRATCH_ORG_DURATION }} \
             --set-default \
             --wait 10 \
             --json
@@ -90,6 +135,7 @@ jobs:
             --target-org ${{ env.SCRATCH_ORG_ALIAS }}
 
       - name: 🧩 Run Apex Tests
+        if: env.RUN_TESTS == 'true' && env.DEPLOY_ONLY != 'true'
         run: |
           sf apex run test \
             --target-org ${{ env.SCRATCH_ORG_ALIAS }} \
@@ -110,6 +156,7 @@ jobs:
           fi
 
       - name: 🔍 Validate Metadata
+        if: env.DEPLOY_ONLY != 'true'
         run: |
           sf project deploy validate \
             --source-dir weather-app \
@@ -137,11 +184,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const testsRun = '${{ env.RUN_TESTS }}' === 'true' && '${{ env.DEPLOY_ONLY }}' !== 'true';
+            const validationRun = '${{ env.DEPLOY_ONLY }}' !== 'true';
+            
             const comment = `## ✅ Feature Validation Passed
             
             **Scratch Org Created Successfully!**
             - **Org Alias:** \`${{ env.SCRATCH_ORG_ALIAS }}\`
-            - **Duration:** 1 day
+            - **Duration:** ${{ env.SCRATCH_ORG_DURATION }} day(s)
             - **Components Deployed:** Weather Dashboard Demo
             - **Permission Set:** Weather_Dashboard_Demo_Access
             
@@ -149,8 +199,8 @@ jobs:
             - ✅ Scratch org creation
             - ✅ Source deployment  
             - ✅ Permission set assignment
-            - ✅ Apex tests execution
-            - ✅ Metadata validation
+            ${testsRun ? '- ✅ Apex tests execution' : '- ⏭️ Apex tests skipped'}
+            ${validationRun ? '- ✅ Metadata validation' : '- ⏭️ Metadata validation skipped'}
             
             ### 🌤️ Weather Dashboard Features:
             - Enterprise Patterns implementation (Domain, Service, Selector)
@@ -217,6 +267,7 @@ jobs:
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
+    if: github.event.inputs.deploy_only != 'true'
     
     steps:
       - name: 🔄 Checkout Code
