@@ -29,10 +29,6 @@
       }
     }
   },
-  "mounts": [
-    "source=${localEnv:HOME}/.sfdx,target=/home/vscode/.sfdx,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.sf,target=/home/vscode/.sf,type=bind,consistency=cached"
-  ],
   "remoteUser": "vscode",
   "postCreateCommand": "npm install",
   "features": {
