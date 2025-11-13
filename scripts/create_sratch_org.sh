@@ -79,9 +79,9 @@ print_status "Creating scratch org with alias '$SCRATCH_ORG_ALIAS'..."
 
 sf org create scratch \
     --definition-file config/project-scratch-def.json \
-    --alias "$SCRATCH_ORG_ALIAS" \
-    --target-dev-hub "$DEV_HUB_ALIAS" \
-    --duration-days "$DURATION_DAYS" \
+    --alias "test2" \
+    --target-dev-hub "dev" \
+    --duration-days "2" \
     --set-default \
     --wait 10
 

@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  salesforce-cli:
+    image: salesforce/salesforcedx:latest-full
+    container_name: sf-dev-container
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - sf-cache:/home/node/.cache
+      - sf-config:/home/node/.config
+    environment:
+      - SFDX_DISABLE_DNS_CHECK=true
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "
+        echo '🔧 Salesforce CLI Version:'
+        sf version
+        
+        echo ''
+        echo '📁 Workspace contents:'
+        ls -la
+        
+        echo ''
+        echo '🔑 Authenticating to Dev Hub with JWT...'
+        if sf org login jwt \
+          --username \"$$DEVHUB_USERNAME\" \
+          --jwt-key-file certs/server.key \
+          --client-id \"$$DEVHUB_CLIENT_ID\" \
+          --alias devhub \
+          --set-default-dev-hub \
+          --instance-url \"$$DEVHUB_INSTANCE_URL\"; then
+          
+          echo ''
+          echo '✅ Authentication successful!'
+          sf org display --target-org devhub
+          
+          echo ''
+          echo '🏢 Dev Hub limits:'
+          sf org limits --target-org devhub
+          
+          echo ''
+          echo '🎉 Ready to work! You are now in the Salesforce CLI container.'
+          echo 'Try these commands:'
+          echo '  sf org list'
+          echo '  sf project generate --name test-project'
+          echo '  sf org create scratch --definition-file config/project-scratch-def.json --alias test-scratch'
+          echo ''
+          
+        else
+          echo ''
+          echo '❌ Authentication failed! Check your credentials and try again.'
+          echo 'You can manually run:'
+          echo '  sf org login jwt --username \"$$DEVHUB_USERNAME\" --jwt-key-file certs/server.key --client-id \"$$DEVHUB_CLIENT_ID\" --alias devhub --set-default-dev-hub --instance-url \"$$DEVHUB_INSTANCE_URL\"'
+          echo ''
+        fi
+        
+        echo 'Dropping into interactive bash shell...'
+        exec bash
+      "
+
+volumes:
+  sf-cache:
+    driver: local
+  sf-config:
+    driver: local
