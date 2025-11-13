@@ -6,9 +6,9 @@
 set -e  # Exit on any error
 
 # Configuration
-SCRATCH_ORG_ALIAS="weather-demo"
-DEV_HUB_ALIAS="dev"
-DURATION_DAYS=2
+SCRATCH_ORG_ALIAS="${1:-weather-demo}"
+DEV_HUB_ALIAS="${2:-$(sf config get target-dev-hub --json 2>/dev/null | jq -r '.result[0].value // "devhub"')}"
+DURATION_DAYS="${3:-2}"
 PERMISSION_SET_NAME="Weather_Dashboard_Demo_Access"
 
 # Colors for output
@@ -49,10 +49,11 @@ if ! command_exists sf; then
 fi
 
 # Check for Dev Hub
-if [ -z "$DEV_HUB_ALIAS" ]; then
+if [ -z "$DEV_HUB_ALIAS" ] || [ "$DEV_HUB_ALIAS" = "null" ]; then
     print_error "No Dev Hub specified. Please:"
+    echo "  Usage: ./create_sratch_org.sh [scratch-org-alias] [dev-hub-alias] [duration-days]"
     echo "  1. Set default dev hub: sf config set target-dev-hub <your-dev-hub-alias>"
-    echo "  2. Or run with dev hub alias: ./create_sratch_org.sh <your-dev-hub-alias>"
+    echo "  2. Or run with parameters: ./create_sratch_org.sh weather-demo devhub 7"
     echo "  3. Or check available orgs: sf org list"
     exit 1
 fi
@@ -76,13 +77,13 @@ print_success "Prerequisites check passed!"
 # Step 1: Create Scratch Org
 print_status "Creating scratch org with alias '$SCRATCH_ORG_ALIAS'..."
 
-# sf org create scratch \
-#     --definition-file config/project-scratch-def.json \
-#     --alias "$SCRATCH_ORG_ALIAS" \
-#     --target-dev-hub "$DEV_HUB_ALIAS" \
-#     --duration-days "$DURATION_DAYS" \
-#     --set-default \
-#     --wait 10
+sf org create scratch \
+    --definition-file config/project-scratch-def.json \
+    --alias "$SCRATCH_ORG_ALIAS" \
+    --target-dev-hub "$DEV_HUB_ALIAS" \
+    --duration-days "$DURATION_DAYS" \
+    --set-default \
+    --wait 10
 
 if [ $? -eq 0 ]; then
     print_success "Scratch org '$SCRATCH_ORG_ALIAS' created successfully!"
@@ -94,7 +95,7 @@ fi
 # Step 2: Push Source Code
 print_status "Pushing source code to scratch org..."
 
-# sf project deploy start 
+sf project deploy start --source-dir weather-app 
 
 if [ $? -eq 0 ]; then
     print_success "Source code deployed successfully!"
