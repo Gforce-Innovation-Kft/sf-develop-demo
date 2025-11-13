@@ -102,12 +102,12 @@ jobs:
       - name: 🏢 Authenticate to Dev Hub (JWT)
         run: |
           sf org login jwt \
-            --username "${{ secrets.DEVHUB_USERNAME }}" \
+            --username "${{ vars.DEVHUB_USERNAME }}" \
             --jwt-key-file jwt-key.txt \
-            --client-id "${{ secrets.DEVHUB_CLIENT_ID }}" \
+            --client-id "${{ vars.DEVHUB_CLIENT_ID }}" \
             --alias ${{ env.DEV_HUB_ALIAS }} \
             --set-default-dev-hub \
-            --instance-url "${{ secrets.DEVHUB_INSTANCE_URL }}"
+            --instance-url "${{ vars.DEVHUB_INSTANCE_URL }}"
 
       - name: 🧪 Create Scratch Org
         run: |
