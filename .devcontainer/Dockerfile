@@ -62,6 +62,9 @@ RUN useradd -m -s /bin/zsh -u 1000 vscode \
 USER vscode
 WORKDIR /home/vscode
 
+# Install SF CLI autocomplete for zsh
+RUN sf autocomplete zsh
+
 # Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
