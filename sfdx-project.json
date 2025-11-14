@@ -15,6 +15,6 @@
   ],
   "name": "sf-develop-demo",
   "namespace": "",
-  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sfdcLoginUrl": "https://orgfarm-b918987145-dev-ed.develop.my.salesforce.com",
   "sourceApiVersion": "65.0"
 }

@@ -5,30 +5,30 @@ on:
   workflow_dispatch:
     inputs:
       target_branch:
-        description: 'Target branch to validate'
+        description: "Target branch to validate"
         required: false
-        default: 'develop'
+        default: "develop"
         type: choice
         options:
           - develop
           - main
       scratch_org_duration:
-        description: 'Scratch org duration (days)'
+        description: "Scratch org duration (days)"
         required: false
-        default: '1'
+        default: "1"
         type: choice
         options:
-          - '1'
-          - '2'
-          - '3'
-          - '7'
+          - "1"
+          - "2"
+          - "3"
+          - "7"
       run_tests:
-        description: 'Run Apex tests'
+        description: "Run Apex tests"
         required: false
         default: true
         type: boolean
       deploy_only:
-        description: 'Deploy only (skip tests and validation)'
+        description: "Deploy only (skip tests and validation)"
         required: false
         default: false
         type: boolean
@@ -36,13 +36,13 @@ on:
   # Trigger on PR events (only when opened or reopened)
   pull_request:
     types: [opened, reopened]
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'weather-app/**'
-      - 'apex-common/**'
-      - 'apex-mocks/**'
-      - 'sfdx-project.json'
-      - 'config/**'
+      - "weather-app/**"
+      - "apex-common/**"
+      - "apex-mocks/**"
+      - "sfdx-project.json"
+      - "config/**"
 
 env:
   SCRATCH_ORG_ALIAS: ${{ github.event_name == 'workflow_dispatch' && format('manual-{0}', github.run_number) || format('pr-validation-{0}', github.run_number) }}
@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 30
     needs: [code-quality]
     if: always() && (needs.code-quality.result == 'success' || needs.code-quality.result == 'skipped')
-    
+
     steps:
       - name: 🔄 Checkout Code
         uses: actions/checkout@v4
@@ -83,8 +83,8 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: 🛠️ Install Dependencies
         run: npm ci
@@ -123,7 +123,6 @@ jobs:
       - name: 📤 Deploy Source to Scratch Org
         run: |
           sf project deploy start \
-            --source-dir weather-app \
             --target-org ${{ env.SCRATCH_ORG_ALIAS }} \
             --wait 20 \
             --json
@@ -186,30 +185,30 @@ jobs:
           script: |
             const testsRun = '${{ env.RUN_TESTS }}' === 'true' && '${{ env.DEPLOY_ONLY }}' !== 'true';
             const validationRun = '${{ env.DEPLOY_ONLY }}' !== 'true';
-            
+
             const comment = `## ✅ Feature Validation Passed
-            
+
             **Scratch Org Created Successfully!**
             - **Org Alias:** \`${{ env.SCRATCH_ORG_ALIAS }}\`
             - **Duration:** ${{ env.SCRATCH_ORG_DURATION }} day(s)
             - **Components Deployed:** Weather Dashboard Demo
             - **Permission Set:** Weather_Dashboard_Demo_Access
-            
+
             ### 🎯 Validation Results:
             - ✅ Scratch org creation
             - ✅ Source deployment  
             - ✅ Permission set assignment
             ${testsRun ? '- ✅ Apex tests execution' : '- ⏭️ Apex tests skipped'}
             ${validationRun ? '- ✅ Metadata validation' : '- ⏭️ Metadata validation skipped'}
-            
+
             ### 🌤️ Weather Dashboard Features:
             - Enterprise Patterns implementation (Domain, Service, Selector)
             - OpenWeatherMap API integration
             - Lightning Web Component interface
             - Custom Weather_Report__c object
-            
+
             **Ready for merge!** 🚀`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -223,21 +222,21 @@ jobs:
         with:
           script: |
             const comment = `## ❌ Feature Validation Failed
-            
+
             **Validation Issues Detected**
             - **Branch:** \`${{ github.ref_name }}\`
             - **Commit:** \`${{ github.sha }}\`
-            
+
             Please check the workflow logs for detailed error information and fix the issues before merging.
-            
+
             ### 🔍 Common Issues:
             - Compilation errors in Apex classes
             - Missing dependencies or references
             - Test failures
             - Metadata deployment issues
-            
+
             [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -268,7 +267,7 @@ jobs:
     name: Code Quality Checks
     runs-on: ubuntu-latest
     if: github.event.inputs.deploy_only != 'true'
-    
+
     steps:
       - name: 🔄 Checkout Code
         uses: actions/checkout@v4
@@ -276,8 +275,8 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: 🛠️ Install Dependencies
         run: npm ci
