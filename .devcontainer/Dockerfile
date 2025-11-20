@@ -65,6 +65,10 @@ WORKDIR /home/vscode
 # Install SF CLI autocomplete for zsh
 RUN sf autocomplete zsh
 
+RUN echo y | sf plugins install code-analyzer && \
+    echo y | sf plugins install  sfdx-git-delta && \
+    echo y | sf plugins install sfdx-browserforce-plugin
+
 # Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
