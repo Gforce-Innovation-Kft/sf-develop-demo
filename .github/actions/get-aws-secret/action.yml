@@ -83,7 +83,8 @@ runs:
     - name: Verify Secret Retrieved
       shell: bash
       run: |
-        if [ -n "${{ steps.get-output.outputs.secret-value }}" ]; then
+        SECRET_OUTPUT='${{ steps.get-output.outputs.secret-value }}'
+        if [ -n "$SECRET_OUTPUT" ]; then
           echo "✅ Verification passed: Secret value is available"
           echo "✅ Secret successfully retrieved and ready to use"
         else
