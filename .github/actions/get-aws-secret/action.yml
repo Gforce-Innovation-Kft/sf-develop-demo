@@ -83,11 +83,19 @@ runs:
     - name: Verify Secret Retrieved
       shell: bash
       run: |
-        SECRET_OUTPUT='${{ steps.get-output.outputs.secret-value }}'
-        if [ -n "$SECRET_OUTPUT" ]; then
+        # Determine the environment variable name
+        if [ -n "${{ inputs.output-name }}" ]; then
+          ENV_VAR_NAME="${{ inputs.output-name }}"
+        else
+          ENV_VAR_NAME=$(echo "${{ inputs.secret-name }}" | tr '/-' '_' | tr '[:lower:]' '[:upper:]')
+        fi
+
+        # Check if the environment variable exists and has a value
+        if [ -n "${!ENV_VAR_NAME}" ]; then
           echo "✅ Verification passed: Secret value is available"
+          echo "✅ Environment variable $ENV_VAR_NAME is set"
           echo "✅ Secret successfully retrieved and ready to use"
         else
-          echo "❌ Verification failed: Secret value is empty"
+          echo "❌ Verification failed: Environment variable $ENV_VAR_NAME is not set or empty"
           exit 1
         fi
