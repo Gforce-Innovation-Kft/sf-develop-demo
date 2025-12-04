@@ -1,0 +1,92 @@
+name: "Get AWS Secret"
+description: "Fetches a secret from AWS Secrets Manager and returns its value"
+author: "GForce Innovation"
+
+inputs:
+  aws-region:
+    description: "AWS region where the secret is stored"
+    required: true
+    default: "eu-central-1"
+  secret-name:
+    description: "Name of the secret in AWS Secrets Manager"
+    required: true
+  aws-role-arn:
+    description: "ARN of the AWS IAM role to assume (for OIDC authentication)"
+    required: true
+  output-name:
+    description: "Environment variable name for the secret (optional, defaults to sanitized secret name)"
+    required: false
+    default: ""
+  parse-json:
+    description: "Parse JSON secrets into individual environment variables"
+    required: false
+    default: "false"
+
+outputs:
+  secret-value:
+    description: "The secret value retrieved from AWS Secrets Manager"
+    value: ${{ steps.get-output.outputs.secret-value }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: ${{ inputs.aws-region }}
+        role-session-name: GitHubActions-${{ github.run_id }}
+
+    - name: Retrieve Secret from AWS Secrets Manager
+      id: get-secret
+      uses: aws-actions/aws-secretsmanager-get-secrets@v2
+      with:
+        secret-ids: |
+          ${{ inputs.output-name && format('{0}, {1}', inputs.output-name, inputs.secret-name) || inputs.secret-name }}
+        parse-json-secrets: ${{ inputs.parse-json }}
+
+    - name: Extract Secret Value and Set Output
+      id: get-output
+      shell: bash
+      run: |
+        echo "✅ Secret retrieved successfully from AWS Secrets Manager"
+
+        # Determine the environment variable name
+        if [ -n "${{ inputs.output-name }}" ]; then
+          ENV_VAR_NAME="${{ inputs.output-name }}"
+        else
+          # Convert secret name to valid env var (replace / and - with _)
+          ENV_VAR_NAME=$(echo "${{ inputs.secret-name }}" | tr '/-' '_' | tr '[:lower:]' '[:upper:]')
+        fi
+
+        # Get the secret value from environment variable set by aws-secretsmanager-get-secrets
+        SECRET_VALUE="${!ENV_VAR_NAME}"
+
+        if [ -z "$SECRET_VALUE" ]; then
+          echo "❌ Error: Failed to retrieve secret value"
+          echo "Expected environment variable: $ENV_VAR_NAME"
+          exit 1
+        fi
+
+        # Mask the secret in logs (double-check)
+        echo "::add-mask::$SECRET_VALUE"
+
+        # Set output
+        echo "secret-value=$SECRET_VALUE" >> $GITHUB_OUTPUT
+
+        # Calculate and display metadata
+        SECRET_LENGTH=${#SECRET_VALUE}
+        echo "✅ Secret value retrieved (length: ${SECRET_LENGTH} characters)"
+        echo "✅ Environment variable: $ENV_VAR_NAME"
+        echo "✅ Secret is masked in GitHub Actions logs"
+
+    - name: Verify Secret Retrieved
+      shell: bash
+      run: |
+        if [ -n "${{ steps.get-output.outputs.secret-value }}" ]; then
+          echo "✅ Verification passed: Secret value is available"
+          echo "✅ Secret successfully retrieved and ready to use"
+        else
+          echo "❌ Verification failed: Secret value is empty"
+          exit 1
+        fi
