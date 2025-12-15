@@ -12,6 +12,8 @@ jobs:
       pull-requests: write
       contents: read
       actions: read
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
     with:
       workspace: "."
       view: "detail"
