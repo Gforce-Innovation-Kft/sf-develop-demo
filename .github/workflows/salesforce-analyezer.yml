@@ -2,6 +2,7 @@ name: Salesforce Code Analyzer Workflow
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   # Option 1: Quality gate on ALL files in the repository
