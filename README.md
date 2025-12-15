@@ -92,6 +92,8 @@ See [Security Documentation](./docs/github-integration/SECURITY.md) for details.
 | [GitHub Integration Overview](./docs/github-integration/README.md) | Architecture, flows, and component details  |
 | [Setup Guide](./docs/github-integration/SETUP.md)                  | Step-by-step configuration                  |
 | [Security Best Practices](./docs/github-integration/SECURITY.md)   | Security implementation and recommendations |
+| [Live Demo](./docs/github-integration/DEMO.md)                     | Complete working example with LWC           |
+| [Quick Reference](./docs/github-integration/QUICKREF.md)           | Commands, snippets, and troubleshooting     |
 | [Weather Demo](./WEATHER_DEMO_README.md)                           | Sample weather application                  |
 
 ## 🔧 Development

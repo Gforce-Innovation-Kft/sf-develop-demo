@@ -18,6 +18,7 @@ A comprehensive integration between Salesforce and GitHub Actions using secure J
 | **[Setup Guide](./github-integration/SETUP.md)**                | Step-by-step configuration instructions         | DevOps, Administrators     |
 | **[Security Best Practices](./github-integration/SECURITY.md)** | Security implementation and compliance          | Security Teams, Architects |
 | **[Quick Reference](./github-integration/QUICKREF.md)**         | Commands, snippets, and troubleshooting         | Developers, Support        |
+| **[Live Demo](./github-integration/DEMO.md)**                   | Complete working example with LWC and workflow  | Developers, All Users      |
 
 ## 🎯 Use Cases
 
