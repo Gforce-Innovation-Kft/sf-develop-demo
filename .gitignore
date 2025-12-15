@@ -44,7 +44,22 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# JWT and keystore artifacts created during local development
+jwt-key.txt
+private_key_base64.txt
+*.jks
+*.p12
+
 # Python Salesforce Functions
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# Added by Illuminated Cloud
+/IlluminatedCloud/
+/out/
+target/
+/.illuminatedCloud/
+**/tsconfig*.json
+**/*.tsbuildinfo
+**/graphql.config.yml

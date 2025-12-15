@@ -1,0 +1,19 @@
+.full-width {
+  width: 100%;
+}
+
+.debug-output {
+  background-color: #16325c;
+  color: #ecebea;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  font-family: "Courier New", monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+.debug-output pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

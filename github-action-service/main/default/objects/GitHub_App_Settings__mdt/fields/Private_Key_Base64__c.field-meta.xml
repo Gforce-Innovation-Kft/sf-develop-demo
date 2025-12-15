@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Private_Key_Base64__c</fullName>
+    <label>Private Key Base64</label>
+    <description
+  >GitHub App private key encoded in Base64 format (without PEM headers/footers)</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText
+  >Store the GitHub App private key in Base64 format. Remove BEGIN/END lines and newlines from the PEM file first.</inlineHelpText>
+    <length>131072</length>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

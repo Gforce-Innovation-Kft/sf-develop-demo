@@ -1,0 +1,58 @@
+.full-width {
+  width: 100%;
+}
+
+.debug-text {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: #f4f6f9;
+  padding: 8px;
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.workflow-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.workflow-item:last-child {
+  border-bottom: none;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.config-item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  background-color: #f4f6f9;
+  border-radius: 4px;
+}
+
+.config-label {
+  font-size: 11px;
+  color: #706e6b;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.config-value {
+  font-size: 13px;
+  color: #080707;
+  font-family: "Courier New", monospace;
+}
+
+lightning-icon {
+  vertical-align: middle;
+}

@@ -1,9 +1,6 @@
 {
   "name": "Salesforce Development",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "image": "gforceinnovation/sf-devcontainer:latest",
   "customizations": {
     "vscode": {
       "extensions": [

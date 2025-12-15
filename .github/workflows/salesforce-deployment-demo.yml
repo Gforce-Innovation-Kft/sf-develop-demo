@@ -1,0 +1,95 @@
+name: Salesforce Deployment Demo
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - sandbox
+          - staging
+          - production
+      deploy_tests:
+        description: "Run Apex tests"
+        required: false
+        type: boolean
+        default: true
+      triggered_by:
+        description: "Triggered by (Salesforce user)"
+        required: false
+        type: string
+        default: "Salesforce"
+      record_id:
+        description: "Salesforce Record ID (optional)"
+        required: false
+        type: string
+
+jobs:
+  salesforce-deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Display deployment info
+        run: |
+          echo "🚀 Salesforce Deployment Demo Started"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Run Tests: ${{ inputs.deploy_tests }}"
+          echo "Triggered By: ${{ inputs.triggered_by }}"
+          echo "Record ID: ${{ inputs.record_id || 'N/A' }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run Number: ${{ github.run_number }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Stage 1 - Validate metadata
+        if: inputs.environment != 'production'
+        run: |
+          echo "🔍 [STAGE 1] Validating metadata for ${{ inputs.environment }}..."
+          sleep 2
+          echo "✅ Metadata validation passed"
+
+      - name: Stage 2 - Run Apex tests
+        if: inputs.deploy_tests == true
+        run: |
+          echo "🧪 [STAGE 2] Running Apex tests..."
+          sleep 3
+          echo "✅ All tests passed (98% coverage)"
+
+      - name: Stage 3 - Deploy to Salesforce
+        run: |
+          echo "📦 [STAGE 3] Deploying to ${{ inputs.environment }}..."
+          sleep 4
+          echo "✅ Deployment completed successfully"
+
+      - name: Stage 4 - Post-deployment verification
+        run: |
+          echo "🔍 [STAGE 4] Running post-deployment checks..."
+          sleep 2
+          echo "✅ All systems operational"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎯 Deployment Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Status: ${{ job.status }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Triggered By: ${{ inputs.triggered_by }}"
+          echo "Record ID: ${{ inputs.record_id || 'Not provided' }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  notify-salesforce:
+    runs-on: ubuntu-latest
+    needs: salesforce-deployment
+    if: always()
+
+    steps:
+      - name: Send notification
+        run: |
+          echo "📨 Sending notification to Salesforce..."
+          echo "Deployment Result: ${{ needs.salesforce-deployment.result }}"
+          echo "✅ Notification sent successfully"

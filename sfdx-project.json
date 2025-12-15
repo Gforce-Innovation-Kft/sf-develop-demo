@@ -9,8 +9,12 @@
       "default": false
     },
     {
-      "path": "weather-app",
+      "path": "github-action-service",
       "default": true
+    },
+    {
+      "path": "weather-app",
+      "default": false
     }
   ],
   "name": "sf-develop-demo",
