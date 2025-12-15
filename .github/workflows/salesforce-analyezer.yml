@@ -1,0 +1,38 @@
+name: Salesforce Code Analyzer Workflow
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Option 1: Quality gate on ALL files in the repository
+  analyze-all-files:
+    uses: gforceinnovation/shared-github-action/.github/workflows/salesforce-code-analyzer.yml@main
+    permissions:
+      pull-requests: write
+      contents: read
+      actions: read
+    with:
+      workspace: "."
+      view: "detail"
+      output-file-html: "sfca_results.html"
+      output-file-json: "sfca_results.json"
+      results-artifact-name: "salesforce-code-analyzer-results"
+      fail-on-sev1-violations: true
+      fail-on-sev2-violations: true
+      max-violations: 10
+      fail-on-changed-files-only: false
+
+  # Option 2: Quality gate on CHANGED files only (useful for legacy codebases)
+  # Uncomment this job and comment out the one above if you want to only check changed files
+  # analyze-changed-files:
+  #   uses: <your-org>/shared-github-action/.github/workflows/salesforce-code-analyzer.yml@main
+  #   permissions:
+  #     pull-requests: write
+  #     contents: read
+  #     actions: read
+  #   with:
+  #     workspace: '.'
+  #     view: 'detail'
+  #     fail-on-changed-files-only: true
+  #     fail-on-sev1-violations: true
+  #     fail-on-sev2-violations: true
