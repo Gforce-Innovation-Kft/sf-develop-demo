@@ -7,7 +7,7 @@ on:
 jobs:
   # Option 1: Quality gate on ALL files in the repository
   analyze-all-files:
-    uses: gforceinnovation/shared-github-action/.github/workflows/salesforce-code-analyzer.yml@main
+    uses: gforceinnovation/shared-github-actions/.github/workflows/salesforce-code-analyzer.yml@main
     permissions:
       pull-requests: write
       contents: read
