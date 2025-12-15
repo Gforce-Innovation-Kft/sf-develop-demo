@@ -1,0 +1,44 @@
+name: Salesforce Notification Handler
+
+on:
+  repository_dispatch:
+    types: [salesforce_event]
+
+jobs:
+  handle-salesforce-event:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Display Event Info
+        run: |
+          echo "🎉 Repository Dispatch Event Received!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Event Type: ${{ github.event.action }}"
+          echo "Triggered from: Salesforce"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Process Salesforce Data
+        env:
+          RECORD_ID: ${{ github.event.client_payload.recordId }}
+          RECORD_TYPE: ${{ github.event.client_payload.recordType }}
+          ACTION: ${{ github.event.client_payload.action }}
+          USER_NAME: ${{ github.event.client_payload.userName }}
+          MESSAGE: ${{ github.event.client_payload.message }}
+        run: |
+          echo "📋 Salesforce Payload:"
+          echo "  Record ID: $RECORD_ID"
+          echo "  Record Type: $RECORD_TYPE"
+          echo "  Action: $ACTION"
+          echo "  User: $USER_NAME"
+          echo "  Message: $MESSAGE"
+
+      - name: Conditional Processing
+        if: ${{ github.event.client_payload.action == 'deploy' }}
+        run: |
+          echo "🚀 Deployment action detected!"
+          echo "Would deploy to: ${{ github.event.client_payload.environment }}"
+
+      - name: Success Notification
+        run: |
+          echo "✅ Event processed successfully!"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
