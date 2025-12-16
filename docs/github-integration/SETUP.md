@@ -49,11 +49,13 @@ openssl rand -hex 32
 
 Under **Repository permissions**, set:
 
-| Permission   | Access                        |
-| ------------ | ----------------------------- |
-| **Actions**  | Read and write                |
-| **Contents** | Read-only                     |
-| **Metadata** | Read-only (automatically set) |
+| Permission   | Access         | Purpose                                     |
+| ------------ | -------------- | ------------------------------------------- |
+| **Actions**  | Read and write | Trigger workflows, read workflow status     |
+| **Contents** | Read and write | **Required for repository_dispatch events** |
+| **Metadata** | Read-only      | Automatically set (repository metadata)     |
+
+⚠️ **Important:** `Contents: write` is required for `repository_dispatch` events. If you only want to use `workflow_dispatch`, `Contents: read` is sufficient.
 
 ### 1.4 Subscribe to Events
 
