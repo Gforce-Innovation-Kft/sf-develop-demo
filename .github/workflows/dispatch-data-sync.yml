@@ -1,0 +1,55 @@
+name: Data Sync Handler
+
+on:
+  repository_dispatch:
+    types: [data_sync]
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Display Sync Request
+        run: |
+          echo "🔄 Data Sync Request Received"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Record Type: ${{ github.event.client_payload.recordType }}"
+          echo "Record ID: ${{ github.event.client_payload.recordId }}"
+          echo "Operation: ${{ github.event.client_payload.operation }}"
+          echo "Triggered By: ${{ github.event.client_payload.triggeredBy }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Display Fields to Sync
+        run: |
+          echo "📋 Fields to Sync:"
+          echo '${{ toJSON(github.event.client_payload.fields) }}' | jq '.'
+
+      - name: Handle Create Operation
+        if: ${{ github.event.client_payload.operation == 'create' }}
+        run: |
+          echo "➕ Creating new record in external system..."
+          echo "Record Type: ${{ github.event.client_payload.recordType }}"
+          # Add create logic here
+
+      - name: Handle Update Operation
+        if: ${{ github.event.client_payload.operation == 'update' }}
+        run: |
+          echo "✏️  Updating existing record in external system..."
+          echo "Record ID: ${{ github.event.client_payload.recordId }}"
+          # Add update logic here
+
+      - name: Handle Delete Operation
+        if: ${{ github.event.client_payload.operation == 'delete' }}
+        run: |
+          echo "🗑️  Deleting record from external system..."
+          echo "Record ID: ${{ github.event.client_payload.recordId }}"
+          # Add delete logic here
+
+      - name: Sync Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Data Sync Complete"
+          echo "  Record: ${{ github.event.client_payload.recordType }}"
+          echo "  Operation: ${{ github.event.client_payload.operation }}"
+          echo "  Status: ${{ job.status }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

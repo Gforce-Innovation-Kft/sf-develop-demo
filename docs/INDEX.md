@@ -12,13 +12,13 @@ Welcome to the Salesforce Development Demo documentation. This portfolio showcas
 
 A comprehensive integration between Salesforce and GitHub Actions using secure JWT-based authentication.
 
-| Document                                                        | Description                                     | Audience                   |
-| --------------------------------------------------------------- | ----------------------------------------------- | -------------------------- |
-| **[Overview & Architecture](./github-integration/README.md)**   | System architecture, components, and data flows | Architects, Developers     |
-| **[Setup Guide](./github-integration/SETUP.md)**                | Step-by-step configuration instructions         | DevOps, Administrators     |
-| **[Security Best Practices](./github-integration/SECURITY.md)** | Security implementation and compliance          | Security Teams, Architects |
-| **[Quick Reference](./github-integration/QUICKREF.md)**         | Commands, snippets, and troubleshooting         | Developers, Support        |
-| **[Live Demo](./github-integration/DEMO.md)**                   | Complete working example with LWC and workflow  | Developers, All Users      |
+| Document                                                                   | Description                                     | Audience                   |
+| -------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------- |
+| **[Overview & Architecture](./github-integration/README.md)**              | System architecture, components, and data flows | Architects, Developers     |
+| **[Setup Guide](./github-integration/SETUP.md)**                           | Step-by-step configuration instructions         | DevOps, Administrators     |
+| **[Security Best Practices](./github-integration/SECURITY.md)**            | Security implementation and compliance          | Security Teams, Architects |
+| **[Quick Reference](./github-integration/QUICKREF.md)**                    | Commands, snippets, and troubleshooting         | Developers, Support        |
+| **[Dispatch Event Framework](./github-integration/DISPATCH_FRAMEWORK.md)** | Structured framework for multiple event types   | Developers, Architects     |
 
 ## 🎯 Use Cases
 
