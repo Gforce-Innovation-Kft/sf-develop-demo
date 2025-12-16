@@ -9,7 +9,8 @@ set -e  # Exit on any error
 SCRATCH_ORG_ALIAS="${1:-weather-demo}"
 DEV_HUB_ALIAS="${2:-$(sf config get target-dev-hub --json 2>/dev/null | jq -r '.result[0].value // "devhub"')}"
 DURATION_DAYS="${3:-2}"
-PERMISSION_SET_NAME="Weather_Dashboard_Demo_Access"
+# Multiple permission sets to assign
+PERMISSION_SETS=("Weather_Dashboard_Demo_Access" "GitHub_Integration_Admin")
 
 # Colors for output
 RED='\033[0;31m'
@@ -79,9 +80,9 @@ print_status "Creating scratch org with alias '$SCRATCH_ORG_ALIAS'..."
 
 sf org create scratch \
     --definition-file config/project-scratch-def.json \
-    --alias "test2" \
-    --target-dev-hub "dev" \
-    --duration-days "2" \
+    --alias "github1" \
+    --target-dev-hub "gforce-dev" \
+    --duration-days "10" \
     --set-default \
     --wait 10
 
@@ -92,42 +93,90 @@ else
     exit 1
 fi
 
-# Step 2: Push Source Code
-print_status "Pushing source code to scratch org..."
+# Step 2: Load Environment Variables
+print_status "Loading environment variables from .env file..."
+
+# Check if .env file exists
+if [ -f ".env" ]; then
+    print_success "Found .env file, loading variables..."
+
+    # Export variables from .env file
+    set -a
+    source .env
+    set +a
+
+    # Check for required variables
+    if [ -n "$GITHUB_PRIVATE_KEY_BASE64" ]; then
+        print_success "✅ GITHUB_PRIVATE_KEY_BASE64 loaded (${#GITHUB_PRIVATE_KEY_BASE64} chars)"
+    else
+        print_warning "⚠️  GITHUB_PRIVATE_KEY_BASE64 not found in .env"
+    fi
+
+    # List other loaded variables (without values)
+    echo ""
+    echo "Environment variables loaded from .env:"
+    grep -v '^#' .env | grep -v '^$' | cut -d '=' -f1 | while read -r var; do
+        if [ -n "${!var}" ]; then
+            echo "  ✅ $var"
+        fi
+    done
+    echo ""
+else
+    print_warning ".env file not found - skipping environment variable injection"
+    print_warning "Create .env file with GITHUB_PRIVATE_KEY_BASE64 for string replacement"
+fi
+
+# Step 3: Push Source Code with String Replacement
+print_status "Deploying source code to scratch org..."
+print_status "SFDX will replace placeholders with environment variables..."
 
 sf project deploy start --source-dir weather-app 
 
 if [ $? -eq 0 ]; then
     print_success "Source code deployed successfully!"
+    if [ -f ".env" ]; then
+        print_success "String replacements applied from environment variables!"
+    fi
 else
     print_error "Failed to deploy source code."
     exit 1
 fi
 
-# Step 3: Assign Permission Set
-print_status "Assigning permission set '$PERMISSION_SET_NAME'..."
+# Step 4: Assign Permission Sets
+print_status "Assigning permission sets..."
 
-sf org assign permset --name "$PERMISSION_SET_NAME"
+PERMSET_SUCCESS=true
 
-if [ $? -eq 0 ]; then
-    print_success "Permission set assigned successfully!"
+for PERMSET in "${PERMISSION_SETS[@]}"; do
+    print_status "Assigning permission set: $PERMSET"
+
+    if sf org assign permset --name "$PERMSET" 2>/dev/null; then
+        print_success "✅ Assigned: $PERMSET"
+    else
+        print_warning "⚠️  Failed to assign: $PERMSET (may not exist in this org)"
+        PERMSET_SUCCESS=false
+    fi
+done
+
+if [ "$PERMSET_SUCCESS" = true ]; then
+    print_success "All permission sets assigned successfully!"
 else
-    print_warning "Failed to assign permission set. You may need to assign it manually."
+    print_warning "Some permission sets could not be assigned. You may need to assign them manually."
 fi
 
-# Step 4: Open the Org
+# Step 5: Open the Org
 print_status "Opening scratch org..."
 
 sf org open --path "/lightning/n/Weather"
 
-# Step 5: Display Summary
+# Step 6: Display Summary
 echo ""
 print_success "🎉 Weather Dashboard Demo Setup Complete!"
 echo ""
 echo -e "${BLUE}Scratch Org Details:${NC}"
 echo "  • Alias: $SCRATCH_ORG_ALIAS"
 echo "  • Duration: $DURATION_DAYS days"
-echo "  • Permission Set: $PERMISSION_SET_NAME"
+echo "  • Permission Sets: ${PERMISSION_SETS[*]}"
 echo ""
 echo -e "${BLUE}Next Steps:${NC}"
 echo "  1. Update API key in WeatherServiceImpl.cls"
@@ -143,7 +192,7 @@ echo ""
 echo -e "${YELLOW}Remember:${NC} Get your free API key from https://openweathermap.org/api"
 echo ""
 
-# Step 6: Display org info
+# Step 7: Display org info
 print_status "Getting org information..."
 sf org display --target-org "$SCRATCH_ORG_ALIAS"
 

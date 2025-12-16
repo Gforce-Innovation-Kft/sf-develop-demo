@@ -20,5 +20,12 @@
   "name": "sf-develop-demo",
   "namespace": "",
   "sfdcLoginUrl": "https://orgfarm-b918987145-dev-ed.develop.my.salesforce.com",
-  "sourceApiVersion": "65.0"
+  "sourceApiVersion": "65.0",
+  "replacements": [
+    {
+      "filename": "github-action-service/main/default/customMetadata/GitHub_App_Settings.salesforce_gforce_devhub.md-meta.xml",
+      "stringToReplace": "GITHUB_PRIVATE_KEY_BASE64_PLACEHOLDER",
+      "replaceWithEnv": "GITHUB_PRIVATE_KEY_BASE64"
+    }
+  ]
 }

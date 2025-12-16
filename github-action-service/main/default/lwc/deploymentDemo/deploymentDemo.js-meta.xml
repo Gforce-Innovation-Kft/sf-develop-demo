@@ -11,22 +11,4 @@
         <target>lightning__HomePage</target>
         <target>lightningCommunity__Page</target>
     </targets>
-    <targetConfigs>
-        <targetConfig targets="lightning__AppPage,lightning__HomePage">
-            <property
-        name="owner"
-        type="String"
-        label="GitHub Owner"
-        default="gforceinnovation"
-        description="GitHub organization or username"
-      />
-            <property
-        name="repo"
-        type="String"
-        label="GitHub Repository"
-        default="sf-develop-demo"
-        description="Repository name"
-      />
-        </targetConfig>
-    </targetConfigs>
 </LightningComponentBundle>
