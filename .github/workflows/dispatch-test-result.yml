@@ -1,0 +1,67 @@
+name: Test Result Handler
+
+on:
+  repository_dispatch:
+    types: [test_result]
+
+jobs:
+  process-test-results:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Display Test Results
+        run: |
+          echo "🧪 Test Results Received"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Test Suite: ${{ github.event.client_payload.testSuite }}"
+          echo "Status: ${{ github.event.client_payload.passed && '✅ PASSED' || '❌ FAILED' }}"
+          echo "Coverage: ${{ github.event.client_payload.coverage }}%"
+          echo "Message: ${{ github.event.client_payload.message }}"
+          echo "Triggered By: ${{ github.event.client_payload.triggeredBy }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Handle Test Failure
+        if: ${{ !github.event.client_payload.passed }}
+        env:
+          ERROR_DETAILS: ${{ github.event.client_payload.errorDetails }}
+        run: |
+          echo "❌ Tests Failed!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Test Suite: ${{ github.event.client_payload.testSuite }}"
+          echo "Error Details: $ERROR_DETAILS"
+          echo ""
+          echo "🔔 Actions to take:"
+          echo "  1. Review error details above"
+          echo "  2. Notify development team"
+          echo "  3. Create GitHub issue if needed"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # Could add: Create GitHub issue, send Slack notification, etc.
+
+      - name: Handle Test Success
+        if: ${{ github.event.client_payload.passed }}
+        run: |
+          echo "✅ All Tests Passed!"
+          echo "Coverage: ${{ github.event.client_payload.coverage }}%"
+
+          # Check coverage threshold
+          COVERAGE=${{ github.event.client_payload.coverage }}
+          THRESHOLD=75
+
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "⚠️  Coverage below threshold ($THRESHOLD%)"
+          else
+            echo "✅ Coverage meets threshold"
+          fi
+
+      - name: Generate Report
+        run: |
+          echo "📊 Test Report Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Test Suite: ${{ github.event.client_payload.testSuite }}"
+          echo "Result: ${{ github.event.client_payload.passed && 'PASSED ✅' || 'FAILED ❌' }}"
+          echo "Coverage: ${{ github.event.client_payload.coverage }}%"
+          echo "Triggered By: ${{ github.event.client_payload.triggeredBy }}"
+          echo "Timestamp: ${{ github.event.client_payload.timestamp }}"
+          echo "Workflow Run ID: ${{ github.run_id }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
