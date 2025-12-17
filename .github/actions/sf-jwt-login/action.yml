@@ -51,17 +51,9 @@ runs:
         # Get the secret JSON from the output
         SECRET_JSON="${{ steps.get-secret.outputs.secret-value }}"
 
-        JWT_KEY=$(echo "$SECRET_JSON" | jq -r '.JWT_KEY // empty')
         JWT_KEY_B64=$(echo "$SECRET_JSON" | jq -r '.JWT_KEY_B64 // empty')
 
-        if [ -n "$JWT_KEY" ]; then
-          # Reformat JWT key from space-separated to proper multi-line format
-          echo "$JWT_KEY" | sed 's/-----BEGIN PRIVATE KEY-----//; s/-----END PRIVATE KEY-----//' \
-            | tr -d ' ' \
-            | fold -w 64 \
-            | sed '1s/^/-----BEGIN PRIVATE KEY-----\n/; $s/$/\n-----END PRIVATE KEY-----/' \
-            > jwt-key.txt
-        elif [ -n "$JWT_KEY_B64" ]; then
+        if [ -n "$JWT_KEY_B64" ]; then
           # Decode base64 into jwt-key.txt
           if command -v openssl >/dev/null 2>&1; then
             echo "$JWT_KEY_B64" | openssl base64 -d -A > jwt-key.txt
