@@ -38,6 +38,7 @@ runs:
         role-session-name: GitHubActions-${{ github.run_id }}
 
     - name: Retrieve Secret from AWS Secrets Manager
+      id: get-output
       uses: aws-actions/aws-secretsmanager-get-secrets@v2
       with:
         secret-ids: |

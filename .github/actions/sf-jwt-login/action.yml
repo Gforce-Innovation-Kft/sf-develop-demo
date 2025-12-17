@@ -35,31 +35,59 @@ runs:
   using: "composite"
   steps:
     - name: Get Salesforce credentials from AWS Secrets Manager
+      id: get-secret
       uses: ./.github/actions/get-aws-secret
       with:
         aws-region: ${{ inputs.aws-region }}
         secret-name: ${{ inputs.secret-name }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
+        parse-json: false
 
     - name: Create JWT key file
       shell: bash
       run: |
-        # Reformat JWT key from space-separated to proper multi-line format
-        echo "$SF_JWT_KEY" | sed 's/-----BEGIN PRIVATE KEY-----//; s/-----END PRIVATE KEY-----//' \
-          | tr -d ' ' \
-          | fold -w 64 \
-          | sed '1s/^/-----BEGIN PRIVATE KEY-----\n/; $s/$/\n-----END PRIVATE KEY-----/' \
-          > jwt-key.txt
+        set -euo pipefail
+
+        # Get the secret JSON from the output
+        SECRET_JSON="${{ steps.get-secret.outputs.secret-value }}"
+
+        JWT_KEY=$(echo "$SECRET_JSON" | jq -r '.JWT_KEY // empty')
+        JWT_KEY_B64=$(echo "$SECRET_JSON" | jq -r '.JWT_KEY_B64 // empty')
+
+        if [ -n "$JWT_KEY" ]; then
+          # Reformat JWT key from space-separated to proper multi-line format
+          echo "$JWT_KEY" | sed 's/-----BEGIN PRIVATE KEY-----//; s/-----END PRIVATE KEY-----//' \
+            | tr -d ' ' \
+            | fold -w 64 \
+            | sed '1s/^/-----BEGIN PRIVATE KEY-----\n/; $s/$/\n-----END PRIVATE KEY-----/' \
+            > jwt-key.txt
+        elif [ -n "$JWT_KEY_B64" ]; then
+          # Decode base64 into jwt-key.txt
+          if command -v openssl >/dev/null 2>&1; then
+            echo "$JWT_KEY_B64" | openssl base64 -d -A > jwt-key.txt
+          else
+            echo "$JWT_KEY_B64" | base64 --decode > jwt-key.txt
+          fi
+        else
+          echo "No JWT key found in secret" >&2
+          exit 1
+        fi
+
         chmod 600 jwt-key.txt
 
     - name: Salesforce JWT Login
       shell: bash
       run: |
+        # Extract from secret output
+        USERNAME=$(echo "${{ steps.get-secret.outputs.secret-value }}" | jq -r '.USERNAME')
+        CLIENT_ID=$(echo "${{ steps.get-secret.outputs.secret-value }}" | jq -r '.CLIENT_ID')
+        INSTANCE_URL=$(echo "${{ steps.get-secret.outputs.secret-value }}" | jq -r '.INSTANCE_URL')
+
         sf org login jwt \
-          --username "$SF_USERNAME" \
+          --username "$USERNAME" \
           --jwt-key-file jwt-key.txt \
-          --client-id "$SF_CLIENT_ID" \
-          --instance-url "$SF_INSTANCE_URL" \
+          --client-id "$CLIENT_ID" \
+          --instance-url "$INSTANCE_URL" \
           --alias ${{ inputs.org-alias }} \
           ${{ inputs.set-default-dev-hub == 'true' && '--set-default-dev-hub' || '' }}
 
