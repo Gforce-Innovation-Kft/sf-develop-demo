@@ -13,19 +13,6 @@ inputs:
   aws-role-arn:
     description: "ARN of the AWS IAM role to assume (for OIDC authentication)"
     required: true
-  output-name:
-    description: "Environment variable name for the secret (optional, defaults to sanitized secret name)"
-    required: false
-    default: ""
-  parse-json:
-    description: "Parse JSON secrets into individual environment variables"
-    required: false
-    default: "false"
-
-outputs:
-  secret-value:
-    description: "The secret value retrieved from AWS Secrets Manager"
-    value: ${{ steps.get-output.outputs.secret-value }}
 
 runs:
   using: "composite"
@@ -41,5 +28,5 @@ runs:
       uses: aws-actions/aws-secretsmanager-get-secrets@v2
       with:
         secret-ids: |
-          ${{ inputs.output-name && format('{0}, {1}', inputs.output-name, inputs.secret-name) || inputs.secret-name }}
-        parse-json-secrets: ${{ inputs.parse-json }}
+          ,${{ inputs.secret-name }}
+        parse-json-secrets: true
