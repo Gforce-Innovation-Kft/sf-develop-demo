@@ -40,7 +40,6 @@ runs:
         aws-region: ${{ inputs.aws-region }}
         secret-name: ${{ inputs.secret-name }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
-        parse-json: true
 
     - name: Create JWT key file
       shell: bash
