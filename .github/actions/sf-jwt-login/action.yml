@@ -35,25 +35,20 @@ runs:
   using: "composite"
   steps:
     - name: Get Salesforce credentials from AWS Secrets Manager
-      id: get-secret
       uses: ./.github/actions/get-aws-secret
       with:
         aws-region: ${{ inputs.aws-region }}
         secret-name: ${{ inputs.secret-name }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
-        parse-json: false
+        parse-json: true
 
     - name: Create JWT key file
       shell: bash
       run: |
         set -euo pipefail
 
-        # Get the secret JSON from the output
-        SECRET_JSON="${{ steps.get-secret.outputs.secret-value }}"
-
-        JWT_KEY_B64=$(echo "$SECRET_JSON" | jq -r '.JWT_KEY_B64 // empty')
-
-        if [ -n "$JWT_KEY_B64" ]; then
+        # Use the parsed env var JWT_KEY_B64
+        if [ -n "${JWT_KEY_B64:-}" ]; then
           # Decode base64 into jwt-key.txt
           if command -v openssl >/dev/null 2>&1; then
             echo "$JWT_KEY_B64" | openssl base64 -d -A > jwt-key.txt
@@ -61,7 +56,7 @@ runs:
             echo "$JWT_KEY_B64" | base64 --decode > jwt-key.txt
           fi
         else
-          echo "No JWT key found in secret" >&2
+          echo "No JWT_KEY_B64 found in secret" >&2
           exit 1
         fi
 
@@ -70,11 +65,6 @@ runs:
     - name: Salesforce JWT Login
       shell: bash
       run: |
-        # Extract from secret output
-        USERNAME=$(echo "${{ steps.get-secret.outputs.secret-value }}" | jq -r '.USERNAME')
-        CLIENT_ID=$(echo "${{ steps.get-secret.outputs.secret-value }}" | jq -r '.CLIENT_ID')
-        INSTANCE_URL=$(echo "${{ steps.get-secret.outputs.secret-value }}" | jq -r '.INSTANCE_URL')
-
         sf org login jwt \
           --username "$USERNAME" \
           --jwt-key-file jwt-key.txt \
