@@ -22,6 +22,13 @@ Secure, bidirectional integration between Salesforce and GitHub Actions using Gi
 - **Apex Mocks**: Comprehensive mocking framework for unit testing
 - **Modular Design**: Organized packages for reusability
 
+### Modern Development Experience
+
+- **DevContainer Support**: Fully configured development environment with Docker
+- **CI/CD Pipelines**: GitHub Actions workflows for automated testing and deployment
+- **Feature Branch Validation**: Automated scratch org creation and validation on PRs
+- **Code Quality Checks**: ESLint and Prettier integration
+
 ## 📁 Project Structure
 
 ```
@@ -46,6 +53,27 @@ sf-develop-demo/
 - Salesforce CLI (`sf` command)
 - Node.js 18+ (for LWC development)
 - Git
+- Docker (for DevContainer support)
+
+### Option 1: DevContainer Development (Recommended)
+
+This project includes a complete DevContainer configuration for consistent development environments.
+
+```bash
+# Open in VS Code with DevContainers extension
+code .
+# VS Code will prompt to "Reopen in Container"
+```
+
+**Included in DevContainer:**
+
+- ✅ Salesforce CLI pre-installed
+- ✅ Node.js 18+ with dependencies
+- ✅ Git and essential tools
+- ✅ VS Code Salesforce extensions
+- ✅ Consistent environment across team
+
+### Option 2: Local Development
 
 ### Setup Development Org
 
