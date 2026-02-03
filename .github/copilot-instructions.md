@@ -4,3 +4,4 @@
 - For Apex: bulkify, avoid SOQL/DML in loops, and prefer `with sharing` unless explicitly required.
 - For LWC: prefer `@wire`/LDS over imperative Apex, keep components small, and separate data from UI.
 - Never hardcode org IDs, URLs, or secrets; use Named Credentials or config where needed.
+- When creating Apex/LWC, start from templates in `docs/templates/` and replace all `{{Tokens}}`.

@@ -1,6 +1,6 @@
 ---
 description: 'Guidelines and best practices for developing Lightning Web Components (LWC) on Salesforce Platform.'
-applyTo: 'force-app/main/default/lwc/**'
+applyTo: '**/main/default/lwc/**'
 ---
 
 # LWC Development
@@ -15,6 +15,7 @@ applyTo: 'force-app/main/default/lwc/**'
     - `myComponent.js-meta.xml`: The metadata configuration file.
     - Optional: `myComponent.css` for component-specific styles.
     - Optional: `myComponent.test.js` for Jest unit tests.
+- Use `weatherDashboard` in `weather-app/main/default/lwc/` as a local reference pattern.
 
 ## Core Principles
 

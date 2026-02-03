@@ -1,0 +1,19 @@
+<template>
+    <lightning-card title="{{ComponentTitle}}">
+        <div class="slds-p-around_medium">
+            <template if:true={items}>
+                <template for:each={items} for:item="item">
+                    <div key={item.id} class="row">
+                        <span>{item.name}</span>
+                    </div>
+                </template>
+            </template>
+            <lightning-button
+                variant="brand"
+                label="Save"
+                onclick={handleSave}
+                disabled={isLoading}
+            ></lightning-button>
+        </div>
+    </lightning-card>
+</template>

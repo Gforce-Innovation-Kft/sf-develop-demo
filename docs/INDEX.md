@@ -7,6 +7,8 @@ Welcome to the Salesforce Development Demo documentation. This portfolio showcas
 ### Getting Started
 
 - **[Main README](../README.md)** - Project overview, features, and quick start guide
+- **[Architecture Notes](./architecture.md)** - Enterprise pattern summary and package layout
+- **[AI Guidance](./ai-guide.md)** - Tips for Copilot prompts and local patterns
 
 ### GitHub Actions Integration
 
@@ -60,6 +62,7 @@ This project demonstrates:
 - ✅ **JWT Authentication** - Industry-standard security
 - ✅ **Webhook Processing** - Real-time event handling
 - ✅ **Test Coverage** - Apex mocks and unit testing
+- ✅ **Reusable Templates** - Apex and LWC templates for consistent implementations
 
 ## 🔍 Finding What You Need
 
@@ -118,11 +121,14 @@ sf-develop-demo/
 ├── README.md                          # Project overview
 ├── docs/                              # Documentation root
 │   ├── INDEX.md                       # This file
-│   └── github-integration/            # GitHub integration docs
+│   ├── architecture.md                # Enterprise patterns overview
+│   ├── ai-guide.md                    # Copilot usage guidance
+│   ├── github-integration/            # GitHub integration docs
 │       ├── README.md                  # Architecture overview
 │       ├── SETUP.md                   # Setup instructions
 │       ├── SECURITY.md                # Security guide
 │       └── QUICKREF.md                # Quick reference
+│   └── templates/                     # Apex and LWC templates
 ├── apex-common/                       # fflib patterns
 ├── apex-mocks/                        # Testing framework
 ├── github-action-service/             # GitHub integration package
