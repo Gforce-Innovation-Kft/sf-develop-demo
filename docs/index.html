@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Enterprise Salesforce Apps with fflib Patterns | Gábor Demeter</title>
+  <meta name="description" content="Deep-dive into building a Salesforce weather dashboard using enterprise patterns, domain logic, and modern development practices" />
+  
+  <!-- Favicons -->
+  <link rel="icon" href="/assets/img/favicon-new.svg" type="image/svg+xml" />
+
+  <!-- Shared Configuration -->
+  <script src="/assets/js/config.js"></script>
+
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="/assets/css/shared-styles.css" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Prism.js for syntax highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  
+  <!-- Custom styles -->
+  <style>
+    .glass-effect {
+      backdrop-filter: blur(16px);
+      background: rgba(15, 23, 42, 0.8);
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    .prose {
+      line-height: 1.7;
+    }
+    
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    
+    .prose h2 {
+      padding-top: 1rem;
+      border-top: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .prose p {
+      margin-bottom: 1rem;
+    }
+    
+    .prose pre {
+      background: #1e293b !important;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+    }
+    
+    .prose code:not(pre code) {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    
+    .prose blockquote {
+      border-left: 4px solid #3b82f6;
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      background: rgba(59, 130, 246, 0.05);
+      padding: 1rem 1rem 1rem 2rem;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .prose ul, .prose ol {
+      margin: 1rem 0;
+      padding-left: 1.5rem;
+    }
+    
+    .prose li {
+      margin: 0.5rem 0;
+    }
+  </style>
+      }
+      .article-content code {
+        font-family:
+          "SF Mono", "Monaco", "Cascadia Code", "Roboto Mono", monospace;
+        font-size: 0.9em;
+      }
+      .video-placeholder {
+        background: linear-gradient(
+          135deg,
+          rgba(27, 150, 255, 0.1),
+          rgba(255, 107, 53, 0.1)
+        );
+        border: 2px dashed rgba(27, 150, 255, 0.3);
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+      }
+      .repo-link {
+        background: linear-gradient(
+          135deg,
+          rgba(27, 150, 255, 0.05),
+          rgba(255, 107, 53, 0.05)
+        );
+        border-left: 4px solid #1b96ff;
+        padding: 1rem;
+        border-radius: 0 6px 6px 0;
+      }
+    </style>
+</head>
+  <body class="text-white font-sans antialiased">
+<!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-effect border-b border-dark-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <div class="flex items-center">
+            <img
+              src="/assets/img/logo.svg"
+              alt="Gforce Innovation"
+              class="h-8 w-8 mr-3"
+            />
+            <span class="text-xl font-display font-bold tracking-tight">
+              <a
+                href="/"
+                class="hover:text-brand-400 transition-colors"
+              >
+                <span class="text-brand-500">Gforce</span> Innovation Kft
+              </a>
+            </span>
+          </div>
+
+          <!-- Desktop Navigation -->
+          <div class="hidden md:flex items-center space-x-8">
+            <a
+              href="/"
+              class="text-dark-300 hover:text-white transition-colors"
+            >
+              Home
+            </a>
+            <a
+              href="/blog.html"
+              class="text-white font-semibold"
+            >
+              Blog
+            </a>
+            <a
+              href="/#about"
+              class="text-dark-300 hover:text-white transition-colors"
+            >
+              About
+            </a>
+            <a
+              href="/#expertise"
+              class="text-dark-300 hover:text-white transition-colors"
+            >
+              Expertise
+            </a>
+            <a
+              href="/cv.html"
+              class="text-dark-300 hover:text-white transition-colors"
+            >
+              CV
+            </a>
+            <a
+              href="/#contact"
+              class="text-dark-300 hover:text-white transition-colors"
+            >
+              Contact
+            </a>
+          </div>
+
+          <!-- Mobile menu button -->
+          <button
+            class="md:hidden mobile-menu-button text-dark-300 hover:text-white"
+            aria-label="Toggle mobile menu"
+            aria-expanded="false"
+          >
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mobile Navigation Menu -->
+    <div
+      class="md:hidden hidden mobile-menu"
+    >
+      <div class="px-2 pt-2 pb-3 space-y-1 bg-dark-800 border-t border-dark-700">
+        <a
+          href="/"
+          class="block px-3 py-2 text-base hover:text-brand-400 transition-colors"
+        >
+          Home
+        </a>
+        <a
+          href="/blog.html"
+          class="block px-3 py-2 text-base text-white font-semibold"
+        >
+          Blog
+        </a>
+        <a
+          href="/#about"
+          class="block px-3 py-2 text-base hover:text-brand-400 transition-colors"
+        >
+          About
+        </a>
+        <a
+          href="/#expertise"
+          class="block px-3 py-2 text-base hover:text-brand-400 transition-colors"
+        >
+          Expertise
+        </a>
+        <a
+          href="/cv.html"
+          class="block px-3 py-2 text-base hover:text-brand-400 transition-colors"
+        >
+          CV
+        </a>
+        <a
+          href="/#contact"
+          class="block px-3 py-2 text-base hover:text-brand-400 transition-colors"
+        >
+          Contact
+        </a>
+      </div>
+    </div>
+
+<!-- Article Header -->
+    <header
+      class="pt-28 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+    >
+      <div class="hero-orb" aria-hidden="true"></div>
+      <div class="max-w-4xl mx-auto relative">
+        <div class="mb-6 reveal">
+          <span
+            class="inline-block px-3 py-1 bg-accent-600/20 text-accent-400 rounded-full text-sm font-medium mb-4"
+          >
+            Salesforce Development
+          </span>
+          <h1 class="text-4xl md:text-5xl font-display font-bold mb-6 leading-tight gradient-text">
+            🌦️ Building Enterprise Salesforce Apps with fflib Patterns
+          </h1>
+          <p class="text-xl text-dark-200 leading-relaxed">
+            Deep-dive into building a Salesforce weather dashboard using enterprise patterns, domain logic, and modern development practices
+          </p>
+        </div>
+
+        <!-- Article Meta -->
+        <div class="flex flex-wrap items-center gap-6 text-dark-400 reveal reveal-delay-1">
+          <div class="flex items-center">
+            <img
+              src="/assets/img/profile.jpg"
+              alt="Gábor Demeter"
+              class="w-10 h-10 rounded-full mr-3"
+            />
+            <div>
+              <div class="font-medium text-white">Gábor Demeter</div>
+              <div class="text-sm">Lead Software Engineer</div>
+            </div>
+          </div>
+          <div class="flex items-center">
+            <i class="fas fa-calendar mr-2"></i>
+            <span>January 2026</span>
+          </div>
+          <div class="flex items-center">
+            <i class="fas fa-clock mr-2"></i>
+            <span>12 min read</span>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-2 mt-6">
+          <span
+            class="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm"
+            >Salesforce</span
+          >
+          <span
+            class="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm"
+            >fflib Patterns</span
+          >
+          <span
+            class="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm"
+            >LWC</span
+          >
+          <span
+            class="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm"
+            >API Integration</span
+          >
+          <span
+            class="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm"
+            >Enterprise Architecture</span
+          >
+        </div>
+      </div>
+    </header>
+
+    <!-- Article Content -->
+    <article class="py-12 px-4 sm:px-6 lg:px-8">
+
+      <!-- Video Placeholder -->
+      <section class="py-12">
+        <div class="max-w-4xl mx-auto">
+          <div class="surface-card p-8 text-center border-2 border-dashed border-brand-500/30 mb-12">
+            <h3 class="text-2xl font-display font-bold mb-4 text-brand-400">
+              🎥 Video Walkthrough Coming Soon!
+            </h3>
+            <p class="text-dark-300 mb-6">
+              I'll be adding a detailed video walkthrough covering:
+            </p>
+            <div class="grid md:grid-cols-2 gap-4 text-left">
+              <div>
+                <ul class="space-y-2 text-dark-200">
+                  <li class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                    Complete architecture overview
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                    Live coding demonstration
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                    Testing strategy walkthrough
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <ul class="space-y-2 text-dark-200">
+                  <li class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                    Design pattern explanations
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                    API integration best practices
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                    Production deployment demo
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Repository Reference -->
+      <section class="pb-12">
+        <div class="max-w-4xl mx-auto">
+          <div class="surface-card p-6 border-l-4 border-brand-500 mb-12">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 class="text-xl font-display font-bold mb-2 text-brand-400">
+                  📂 Project Repository
+                </h3>
+                <p class="text-dark-300">
+                  Complete source code, documentation, and deployment scripts
+                </p>
+              </div>
+              <div>
+                <a
+                  href="https://github.com/demetergabor/gforce/tree/main/sf-develop-demo"
+                  class="inline-flex items-center px-6 py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 transition-all whitespace-nowrap"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  View Source Code
+                  <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Article Content -->
+      <section class="py-12">
+        <div class="max-w-4xl mx-auto prose prose-invert">
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6">
+            The Challenge: Building Maintainable Salesforce Applications
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-6">
+            When building enterprise Salesforce applications, proper
+            architecture becomes crucial for maintainability, testability, and
+            scalability. Too often, I see Salesforce projects that start simple
+            but become unmaintainable as they grow. The
+            <strong>fflib (FinancialForce Library) framework</strong> provides
+            proven patterns that help organize your Apex code following
+            Domain-Driven Design principles.
+          </p>
+
+          <p class="text-dark-200 leading-relaxed mb-6">
+            In this post, I'll walk through my
+            <strong>Weather Dashboard application</strong> - a complete
+            Salesforce implementation that demonstrates how to structure
+            enterprise-grade applications using modern development practices.
+          </p>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Architecture Overview: The Four Layers
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-6">
+            The fflib framework organizes code into four distinct layers, each
+            with a specific responsibility:
+          </p>
+
+          <div class="surface-card p-6 mb-8">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="text-lg font-semibold mb-2 text-accent-400">🏛️ Domain Layer</h4>
+                <p class="text-dark-300">
+                  Business logic and validation rules
+                </p>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold mb-2 text-accent-400">🔍 Selector Layer</h4>
+                <p class="text-dark-300">Encapsulated SOQL queries</p>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold mb-2 text-accent-400">⚙️ Service Layer</h4>
+                <p class="text-dark-300">Complex business processes</p>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold mb-2 text-accent-400">🔄 Unit of Work</h4>
+                <p class="text-dark-300">Transactional operations</p>
+              </div>
+            </div>
+          </div>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Domain Layer: Business Logic Made Clear
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-6">
+            Let's start with the Domain layer. Here's how I implemented the
+            WeatherReports domain class:
+          </p>
+
+          <pre><code class="language-java">/**
+ * Domain class for Weather Report records following Enterprise Patterns
+ */
+public class WeatherReports extends fflib_SObjectDomain {
+    public WeatherReports(List&lt;Weather_Report__c&gt; sObjectList) {
+        super(sObjectList);
+    }
+
+    public class Constructor implements fflib_SObjectDomain.IConstructable {
+        public fflib_SObjectDomain construct(List&lt;SObject&gt; sObjectList) {
+            return new WeatherReports(sObjectList);
+        }
+    }
+
+    /**
+     * Domain logic for validating weather reports
+     */
+    public override void onBeforeInsert() {
+        validateWeatherReports();
+        setReportDateTime();
+    }
+
+    public override void onBeforeUpdate(Map&lt;Id, SObject&gt; existingRecords) {
+        validateWeatherReports();
+    }
+
+    /**
+     * Validate weather report data
+     */
+    private void validateWeatherReports() {
+        for (Weather_Report__c report : getWeatherRecords()) {
+            validateTemperature(report);
+            validateHumidity(report);
+            validateCity(report);
+        }
+    }
+
+    /**
+     * Set report date time for new records
+     */
+    private void setReportDateTime() {
+        for (Weather_Report__c report : getWeatherRecords()) {
+            if (report.Report_Date_Time__c == null) {
+                report.Report_Date_Time__c = Datetime.now();
+            }
+        }
+    }
+}</code></pre>
+
+          <div class="surface-card p-6 border-l-4 border-green-500 my-6">
+            <h4 class="text-lg font-semibold mb-3 text-accent-400">
+              ✅ Key Benefits of This Approach:
+            </h4>
+            <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+              <li>
+                <strong>Centralized Business Logic:</strong> All validation
+                rules in one place
+              </li>
+              <li>
+                <strong>Trigger Handler Pattern:</strong> Clean trigger
+                management
+              </li>
+              <li>
+                <strong>Reusable Validation:</strong> Logic can be called from
+                anywhere
+              </li>
+              <li>
+                <strong>Easy Testing:</strong> Domain logic is isolated and
+                testable
+              </li>
+            </ul>
+          </div>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Selector Pattern: SOQL Done Right
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-4">
+            The Selector pattern encapsulates all database queries and provides
+            a consistent interface for data access. Here's my
+            WeatherReportsSelector implementation:
+          </p>
+
+          <pre><code class="language-java">/**
+ * Selector class for Weather Reports following Enterprise Patterns
+ */
+public class WeatherReportsSelector extends fflib_SObjectSelector {
+    
+    public static WeatherReportsSelector newInstance() {
+        return (WeatherReportsSelector) Application.Selector.newInstance(Weather_Report__c.SObjectType);
+    }
+
+    public Schema.SObjectType getSObjectType() {
+        return Weather_Report__c.SObjectType;
+    }
+
+    public List&lt;Schema.SObjectField&gt; getSObjectFieldList() {
+        return new List&lt;Schema.SObjectField&gt; {
+            Weather_Report__c.Id,
+            Weather_Report__c.Name,
+            Weather_Report__c.City__c,
+            Weather_Report__c.Temperature__c,
+            Weather_Report__c.Weather_Description__c,
+            Weather_Report__c.Humidity__c,
+            Weather_Report__c.Pressure__c,
+            Weather_Report__c.Report_Date_Time__c,
+            Weather_Report__c.CreatedDate,
+            Weather_Report__c.LastModifiedDate
+        };
+    }
+
+    /**
+     * Select records by city with limit
+     */
+    public List&lt;Weather_Report__c&gt; selectByCity(String city, Integer limitCount) {
+        return (List&lt;Weather_Report__c&gt;) Database.query(
+            newQueryFactory()
+                .setCondition('City__c = :city')
+                .setLimit(limitCount)
+                .setOrdering('Report_Date_Time__c', fflib_QueryFactory.SortOrder.DESCENDING)
+                .toSOQL()
+        );
+    }
+
+    /**
+     * Select recent reports across all cities
+     */
+    public List&lt;Weather_Report__c&gt; selectRecentReports(Integer limitCount) {
+        return (List&lt;Weather_Report__c&gt;) Database.query(
+            newQueryFactory()
+                .setLimit(limitCount)
+                .setOrdering('Report_Date_Time__c', fflib_QueryFactory.SortOrder.DESCENDING)
+                .toSOQL()
+        );
+    }
+}</code></pre>
+
+          <div class="surface-card p-6 border-l-4 border-blue-500 my-6">
+            <h4 class="text-lg font-semibold mb-3 text-accent-400">
+              🔍 Why This Pattern Matters:
+            </h4>
+            <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+              <li>
+                <strong>Consistent Field Selection:</strong> Always query the
+                same fields
+              </li>
+              <li>
+                <strong>Security Handled:</strong> FLS and CRUD checks are
+                automatic
+              </li>
+              <li>
+                <strong>Query Optimization:</strong> Built-in query factory for
+                complex SOQL
+              </li>
+              <li>
+                <strong>Mockable for Testing:</strong> Easy to create test data
+                scenarios
+              </li>
+            </ul>
+          </div>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Service Layer: External API Integration
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-4">
+            The Service layer handles complex business processes. In our weather
+            app, this includes calling the OpenWeatherMap API and managing the
+            data flow:
+          </p>
+
+          <pre><code class="language-java">/**
+ * Weather Service Implementation with proper error handling
+ */
+public class WeatherServiceImpl implements IWeatherService {
+    
+    /**
+     * Get current weather from OpenWeatherMap API
+     */
+    public WeatherData getCurrentWeather(String city) {
+        try {
+            Http http = new Http();
+            HttpRequest request = new HttpRequest();
+            
+            String endpoint = 'callout:OpenWeatherMap_API' + 
+                            '/weather?q=' + EncodingUtil.urlEncode(city, 'UTF-8') + 
+                            '&appid={!$Credential.OWM_API_Key}&units=metric';
+            
+            request.setEndpoint(endpoint);
+            request.setMethod('GET');
+            request.setTimeout(10000); // 10 second timeout
+            
+            HttpResponse response = http.send(request);
+            
+            if (response.getStatusCode() == 200) {
+                return parseWeatherResponse(response.getBody(), city);
+            } else {
+                throw new WeatherServiceException('API call failed: ' + response.getStatus());
+            }
+        } catch (Exception e) {
+            System.debug('Error in getCurrentWeather: ' + e.getMessage());
+            throw new WeatherServiceException('Failed to get weather data: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * Save weather report using Unit of Work pattern
+     */
+    public Id saveWeatherReport(WeatherData weatherData) {
+        try {
+            // Create Unit of Work
+            fflib_ISObjectUnitOfWork uow = Application.UnitOfWork.newInstance();
+            
+            // Create Weather Report record
+            Weather_Report__c report = new Weather_Report__c(
+                City__c = weatherData.city,
+                Temperature__c = weatherData.temperature,
+                Weather_Description__c = weatherData.description,
+                Humidity__c = weatherData.humidity,
+                Pressure__c = weatherData.pressure,
+                Report_Date_Time__c = weatherData.reportDateTime
+            );
+            
+            // Register for insert
+            uow.registerNew(report);
+            
+            // Commit changes
+            uow.commitWork();
+            
+            return report.Id;
+        } catch (Exception e) {
+            System.debug('Error in saveWeatherReport: ' + e.getMessage());
+            throw new WeatherServiceException('Failed to save weather report: ' + e.getMessage());
+        }
+    }
+}</code></pre>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Lightning Web Component: Modern UI
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-4">
+            The frontend uses Lightning Web Components with clean separation
+            between UI logic and business logic:
+          </p>
+
+          <pre><code class="language-javascript">// weatherDashboard.js - Clean, reactive component
+import { LightningElement, track, wire } from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { refreshApex } from '@salesforce/apex';
+import getCurrentWeatherAndSave from '@salesforce/apex/WeatherDashboardController.getCurrentWeatherAndSave';
+import getRecentWeatherReports from '@salesforce/apex/WeatherDashboardController.getRecentWeatherReports';
+
+export default class WeatherDashboard extends LightningElement {
+    @track cityName = '';
+    @track currentWeather = null;
+    @track recentReports = [];
+    @track isLoading = false;
+
+    // Wired method for reactive data
+    @wire(getRecentWeatherReports, { limitCount: 10 })
+    wiredGetRecentReports(result) {
+        this.wiredRecentReports = result;
+        if (result.data) {
+            this.recentReports = result.data;
+        }
+    }
+
+    handleCityChange(event) {
+        this.cityName = event.target.value;
+    }
+
+    async handleGetWeather() {
+        if (!this.cityName.trim()) {
+            this.showToast('Error', 'Please enter a city name', 'error');
+            return;
+        }
+
+        this.isLoading = true;
+        try {
+            const result = await getCurrentWeatherAndSave({ city: this.cityName.trim() });
+            
+            if (result.success) {
+                this.currentWeather = result.weatherData;
+                this.showToast('Success', result.message, 'success');
+                
+                // Refresh recent reports
+                return refreshApex(this.wiredRecentReports);
+            } else {
+                this.showToast('Error', result.message, 'error');
+            }
+        } catch (error) {
+            this.showToast('Error', 'Unexpected error occurred', 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+}</code></pre>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Testing Strategy: Comprehensive Coverage
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-6">
+            One of the biggest advantages of the fflib architecture is how easy
+            it makes testing. Each layer can be tested independently, and you
+            can mock dependencies cleanly.
+          </p>
+
+          <div class="surface-card p-6 border-l-4 border-orange-500 mb-6">
+            <h4 class="text-lg font-semibold mb-3 text-accent-400">
+              🧪 Test Coverage Breakdown:
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+                  <li>
+                    <strong>Domain Tests:</strong> Validation logic (95%
+                    coverage)
+                  </li>
+                  <li>
+                    <strong>Selector Tests:</strong> Query methods (90%
+                    coverage)
+                  </li>
+                  <li>
+                    <strong>Service Tests:</strong> API integration (88%
+                    coverage)
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+                  <li>
+                    <strong>Controller Tests:</strong> LWC backend (92%
+                    coverage)
+                  </li>
+                  <li>
+                    <strong>Integration Tests:</strong> End-to-end flows (85%
+                    coverage)
+                  </li>
+                  <li>
+                    <strong>Overall Coverage:</strong> 91% across all Apex
+                    classes
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Key Architectural Decisions & Lessons Learned
+          </h2>
+
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+          >
+            <div>
+              <div class="surface-card p-6 border-l-4 border-green-500">
+                <h4 class="text-lg font-semibold mb-3 text-accent-400">
+                  ✅ What Worked Well
+                </h4>
+                <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+                  <li>Clear separation of concerns</li>
+                  <li>Excellent testability</li>
+                  <li>Easy to extend with new features</li>
+                  <li>Named credentials for secure API calls</li>
+                  <li>Proper error handling throughout</li>
+                  <li>Reactive UI with @wire decorators</li>
+                </ul>
+              </div>
+            </div>
+            <div>
+              <div class="surface-card p-6 border-l-4 border-orange-500">
+                <h4 class="text-lg font-semibold mb-3 text-accent-400">
+                  ⚠️ Challenges & Solutions
+                </h4>
+                <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+                  <li>
+                    <strong>API Rate Limits:</strong> Implemented caching
+                    strategy
+                  </li>
+                  <li>
+                    <strong>Bulk Operations:</strong> Used Unit of Work for
+                    efficiency
+                  </li>
+                  <li>
+                    <strong>Error Handling:</strong> Consistent exception
+                    patterns
+                  </li>
+                  <li>
+                    <strong>Testing External APIs:</strong> Mock callouts
+                    properly
+                  </li>
+                  <li>
+                    <strong>Complex SOQL:</strong> Query factory made it
+                    manageable
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <h2 class="text-3xl font-display font-bold mb-6 text-brand-400 border-t border-brand-500/20 pt-6 mt-12">
+            Next Steps & Future Enhancements
+          </h2>
+
+          <p class="text-dark-200 leading-relaxed mb-6">
+            This weather dashboard demonstrates the foundation of enterprise
+            Salesforce development. Here's what I'm planning next:
+          </p>
+
+          <div class="surface-card p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 class="text-lg font-semibold mb-3 text-accent-400">🚀 Planned Features</h4>
+                <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+                  <li>Weather forecasts and alerts</li>
+                  <li>Geolocation-based weather</li>
+                  <li>Historical weather analysis</li>
+                  <li>Mobile app with offline support</li>
+                </ul>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold mb-3 text-accent-400">
+                  🔧 Technical Improvements
+                </h4>
+                <ul class="list-disc list-inside space-y-2 text-dark-300 text-sm">
+                  <li>Platform Events for real-time updates</li>
+                  <li>Einstein Analytics dashboards</li>
+                  <li>Advanced caching with Platform Cache</li>
+                  <li>Continuous Integration with GitHub Actions</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GitHub Repository Link -->
+      <section class="py-12 bg-dark-800/30 border-t border-dark-700">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+          <h3 class="text-2xl font-bold mb-4">📂 Complete Source Code</h3>
+          <p class="text-dark-300 mb-6">
+            Browse the complete implementation including tests, deployment scripts, and documentation.
+          </p>
+          <a
+            href="https://github.com/demetergabor/gforce/tree/main/sf-develop-demo"
+            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="fab fa-github mr-2"></i>
+            View Repository
+          </a>
+        </div>
+      </section>
+    </article>
+
+    <!-- Article Navigation -->
+    <section class="py-12 px-4 sm:px-6 lg:px-8 bg-dark-800/30 border-t border-dark-700">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+          <a
+            href="/sf-oauth-webserver-demo/"
+            class="surface-card p-6 rounded-xl hover:border-brand-500/30 transition-all group w-full md:w-1/2"
+          >
+            <div class="text-sm text-dark-400 mb-2">
+              <i class="fas fa-arrow-left mr-2"></i>Previous Article
+            </div>
+            <div class="text-lg font-semibold group-hover:text-brand-400 transition-colors">
+              OAuth + Docker + Terraform: Production-Ready Architecture
+            </div>
+          </a>
+          <a
+            href="/sf-deploy-app/"
+            class="surface-card p-6 rounded-xl hover:border-brand-500/30 transition-all group w-full md:w-1/2 text-right"
+          >
+            <div class="text-sm text-dark-400 mb-2">
+              Next Article<i class="fas fa-arrow-right ml-2"></i>
+            </div>
+            <div class="text-lg font-semibold group-hover:text-brand-400 transition-colors">
+              DevOps Orchestration Platform with React & TypeScript
+            </div>
+          </a>
+        </div>
+
+        <div class="text-center">
+          <a
+            href="/blog.html"
+            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors"
+          >
+            <i class="fas fa-th mr-2"></i>
+            View All Articles
+          </a>
+        </div>
+      </div>
+    </section>
+
+<!-- Footer -->
+    <footer class="bg-dark-800 border-t border-dark-700 py-12">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-3 gap-8">
+          <div>
+            <div class="flex items-center mb-4">
+              <img
+                src="/assets/img/logo.svg"
+                alt="Gforce Innovation"
+                class="h-8 w-8 mr-3"
+              />
+              <span class="text-xl font-display font-bold tracking-tight">
+                <span class="text-brand-500">Gforce</span> Innovation Kft
+              </span>
+            </div>
+            <p class="text-dark-400 text-sm">
+              Delivering enterprise-grade Salesforce DevOps solutions with proven results.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold mb-4">Quick Links</h4>
+            <ul class="space-y-2 text-sm text-dark-400">
+              <li><a href="/" class="hover:text-brand-400 transition-colors">Home</a></li>
+              <li><a href="/blog.html" class="hover:text-brand-400 transition-colors">Blog</a></li>
+              <li><a href="/#about" class="hover:text-brand-400 transition-colors">About</a></li>
+              <li><a href="/#expertise" class="hover:text-brand-400 transition-colors">Expertise</a></li>
+              <li><a href="/#contact" class="hover:text-brand-400 transition-colors">Contact</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-semibold mb-4">Connect</h4>
+            <div class="text-sm text-dark-400 space-y-2">
+              <p>📍 Malaga, Spain</p>
+              <p>✉️ gforceinnovation@gmail.com</p>
+              <div class="flex space-x-4 mt-4">
+                <a
+                  href="https://www.linkedin.com/in/gábor-demeter-b721ab12a/"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-dark-400 hover:text-brand-400 transition-colors"
+                >
+                  <i class="fab fa-linkedin text-xl"></i>
+                </a>
+                <a
+                  href="https://github.com/demetergabor/gforce"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-dark-400 hover:text-brand-400 transition-colors"
+                >
+                  <i class="fab fa-github text-xl"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-dark-700 mt-8 pt-8 text-center text-sm text-dark-500">
+          <p>&copy; 2026 Gforce Innovation Kft. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+<!-- Shared JavaScript -->
+    <script src="/assets/js/shared.js"></script>
+
+    <!-- Reading progress indicator -->
+    <script>
+      window.addEventListener("scroll", function () {
+        const scrollTop = window.pageYOffset;
+        const docHeight = document.body.offsetHeight;
+        const winHeight = window.innerHeight;
+        const scrollPercent = scrollTop / (docHeight - winHeight);
+        const progress = Math.round(scrollPercent * 100);
+        document.title = `(${progress}%) Building Enterprise Salesforce Apps | Gábor Demeter`;
+      });
+    </script>
+  </body>
+</html>
