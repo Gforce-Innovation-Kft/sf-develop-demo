@@ -1,0 +1,14 @@
+name: Pi Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted
+    container: ubuntu:latest
+    steps:
+      - name: System info
+        run: |
+          uname -a
+          echo "Hello from Pi5"
