@@ -6,9 +6,21 @@ on:
 jobs:
   test:
     runs-on: self-hosted
-    container: ubuntu:latest
+    container:
+      image: gforceinnovation/sf-ci:latest
+      credentials:
+        username: gforceinnovation
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
+      - name: SF CLI version
+        run: sf --version
+
+      - name: SF CLI plugins
+        run: sf plugins
+
       - name: System info
         run: |
           uname -a
-          echo "Hello from Pi5"
+          node --version
+          java -version
+          jq --version
