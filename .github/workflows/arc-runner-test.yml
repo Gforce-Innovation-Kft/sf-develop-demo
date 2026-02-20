@@ -5,25 +5,24 @@ on:
 
 jobs:
   # ============================================================
-  # Job 1 — SF CLI verification
-  # container: tells ARC to run steps inside sf-ci image
-  # The runner pod itself uses the default ARC image
+  # Job 1 — system info + SF CLI verification
   # ============================================================
   runner-info:
     runs-on: pi5-runners
-    container:
-      image: gforceinnovation/sf-ci:latest
-      credentials:
-        username: gforceinnovation
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Host info
         run: |
           echo "===== HOST ====="
           echo "Hostname:     $(hostname)"
           echo "Architecture: $(uname -m)"
+          echo "OS:           $(uname -s) $(uname -r)"
           echo "CPU cores:    $(nproc)"
+          echo ""
+          echo "===== MEMORY ====="
           free -h
+          echo ""
+          echo "===== DISK ====="
+          df -h /
 
       - name: SF CLI version
         run: sf --version
@@ -31,27 +30,23 @@ jobs:
       - name: SF CLI plugins
         run: sf plugins
 
-      - name: Tool versions
+      - name: Node & Java versions
         run: |
           echo "Node: $(node --version)"
-          java -version
+          echo "Java: $(java -version 2>&1 | head -1)"
           echo "jq:   $(jq --version)"
 
   # ============================================================
-  # Job 2 — parallel runner
+  # Job 2 — parallel runner (ARC spins up a second pod)
   # ============================================================
   parallel-job-2:
     runs-on: pi5-runners
-    container:
-      image: gforceinnovation/sf-ci:latest
-      credentials:
-        username: gforceinnovation
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Host info
         run: |
-          echo "Hostname: $(hostname)"
-          echo "Arch:     $(uname -m)"
+          echo "===== HOST ====="
+          echo "Hostname:     $(hostname)"
+          echo "Architecture: $(uname -m)"
           free -h
 
       - name: SF CLI version
@@ -61,20 +56,16 @@ jobs:
         run: sf plugins
 
   # ============================================================
-  # Job 3 — parallel runner
+  # Job 3 — parallel runner (ARC spins up a third pod)
   # ============================================================
   parallel-job-3:
     runs-on: pi5-runners
-    container:
-      image: gforceinnovation/sf-ci:latest
-      credentials:
-        username: gforceinnovation
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Host info
         run: |
-          echo "Hostname: $(hostname)"
-          echo "Arch:     $(uname -m)"
+          echo "===== HOST ====="
+          echo "Hostname:     $(hostname)"
+          echo "Architecture: $(uname -m)"
           free -h
 
       - name: SF CLI version
@@ -84,17 +75,14 @@ jobs:
         run: sf plugins
 
   # ============================================================
-  # Summary
+  # Summary — runs after all 3 jobs complete
   # ============================================================
   summary:
     runs-on: pi5-runners
     needs: [runner-info, parallel-job-2, parallel-job-3]
-    container:
-      image: gforceinnovation/sf-ci:latest
-      credentials:
-        username: gforceinnovation
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
-      - run: |
-          echo "All 3 runners completed on K3s!"
-          echo "SF CLI: $(sf --version)"
+      - name: Summary
+        run: |
+          echo "All 3 runners completed successfully!"
+          echo "Hostname: $(hostname)"
+          echo "SF CLI:   $(sf --version)"
