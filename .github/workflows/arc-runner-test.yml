@@ -1,0 +1,62 @@
+name: ARC Runner Test (K3s)
+
+on:
+  workflow_dispatch:   # manual trigger — run from GitHub Actions tab
+
+jobs:
+  # ============================================================
+  # Basic test — verifies the runner pod comes up and runs
+  # ============================================================
+  runner-info:
+    runs-on: pi5-runners   # routes to your K3s ARC runner scale set
+    steps:
+      - name: Show runner info
+        run: |
+          echo "Hostname:      $(hostname)"
+          echo "Architecture:  $(uname -m)"
+          echo "OS:            $(uname -s) $(uname -r)"
+          echo "CPU cores:     $(nproc)"
+          free -h
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show repo info
+        run: |
+          echo "Branch: $(git branch --show-current)"
+          echo "Commit: $(git rev-parse --short HEAD)"
+          ls -la
+
+  # ============================================================
+  # Parallel jobs — triggers ARC to scale up multiple runner pods
+  # Watch: kubectl get pods -n arc-runners -w
+  # ============================================================
+  parallel-job-1:
+    runs-on: pi5-runners
+    steps:
+      - run: |
+          echo "Job 1 running on $(hostname)"
+          sleep 10
+
+  parallel-job-2:
+    runs-on: pi5-runners   # ARC spins up a second pod for this
+    steps:
+      - run: |
+          echo "Job 2 running on $(hostname)"
+          sleep 10
+
+  parallel-job-3:
+    runs-on: pi5-runners   # ARC spins up a third pod
+    steps:
+      - run: |
+          echo "Job 3 running on $(hostname)"
+          sleep 10
+
+  # ============================================================
+  # Summary — runs after all parallel jobs finish
+  # ============================================================
+  summary:
+    runs-on: pi5-runners
+    needs: [runner-info, parallel-job-1, parallel-job-2, parallel-job-3]
+    steps:
+      - run: echo "All jobs completed successfully on K3s ARC runners!"
