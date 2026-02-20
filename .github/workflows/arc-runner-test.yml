@@ -4,15 +4,18 @@ on:
   workflow_dispatch:
 
 jobs:
+
   # ============================================================
-  # Job 1 — system info + SF CLI verification
+  # RUNNER 1: pi5-runners (basic)
+  # Default ARC image — no Docker, no SF CLI
+  # Tests: shell, git, kubectl basics
   # ============================================================
-  runner-info:
+  test-basic-runner:
     runs-on: pi5-runners
     steps:
       - name: Host info
         run: |
-          echo "===== HOST ====="
+          echo "===== RUNNER: pi5-runners ====="
           echo "Hostname:     $(hostname)"
           echo "Architecture: $(uname -m)"
           echo "OS:           $(uname -s) $(uname -r)"
@@ -20,31 +23,54 @@ jobs:
           echo ""
           echo "===== MEMORY ====="
           free -h
-          echo ""
-          echo "===== DISK ====="
-          df -h /
 
-      - name: SF CLI version
-        run: sf --version
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: SF CLI plugins
-        run: sf plugins
-
-      - name: Node & Java versions
+      - name: Git info
         run: |
-          echo "Node: $(node --version)"
-          echo "Java: $(java -version 2>&1 | head -1)"
-          echo "jq:   $(jq --version)"
+          echo "Branch: $(git branch --show-current)"
+          echo "Commit: $(git rev-parse --short HEAD)"
+
+      - name: Basic tools check
+        run: |
+          echo "bash:  $(bash --version | head -1)"
+          echo "curl:  $(curl --version | head -1)"
+          echo "git:   $(git --version)"
+          echo "jq:    $(jq --version)"
 
   # ============================================================
-  # Job 2 — parallel runner (ARC spins up a second pod)
+  # RUNNER 2: pi5-runners-dind (Docker-in-Docker)
+  # Tests: docker CLI, running containers inside the workflow
   # ============================================================
-  parallel-job-2:
-    runs-on: pi5-runners
+  test-dind-runner:
+    runs-on: pi5-runners-dind  
+    container:
+      image: gforceinnovation/sf-ci:latest
+      credentials:
+        username: gforceinnovation
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Host info
         run: |
           echo "===== HOST ====="
+          echo "Hostname:     $(hostname)"
+          echo "Architecture: $(uname -m)"
+          echo "CPU cores:    $(nproc)"
+          free -h
+      - name: sf version
+        run: sf --version
+
+  # ============================================================
+  # RUNNER 3: pi5-runners-custom-sf (SF CLI pre-installed)
+  # Tests: SF CLI, Node, Java, jq — no install needed
+  # ============================================================
+  test-custom-sf-runner:
+    runs-on: pi5-runners-custom-sf
+    steps:
+      - name: Host info
+        run: |
+          echo "===== RUNNER: pi5-runners-custom-sf ====="
           echo "Hostname:     $(hostname)"
           echo "Architecture: $(uname -m)"
           free -h
@@ -55,34 +81,30 @@ jobs:
       - name: SF CLI plugins
         run: sf plugins
 
-  # ============================================================
-  # Job 3 — parallel runner (ARC spins up a third pod)
-  # ============================================================
-  parallel-job-3:
-    runs-on: pi5-runners
-    steps:
-      - name: Host info
-        run: |
-          echo "===== HOST ====="
-          echo "Hostname:     $(hostname)"
-          echo "Architecture: $(uname -m)"
-          free -h
+      - name: Node version
+        run: node --version
 
-      - name: SF CLI version
-        run: sf --version
+      - name: Java version
+        run: java -version
 
-      - name: SF CLI plugins
-        run: sf plugins
+      - name: jq version
+        run: jq --version
+
+      - name: SF CLI help (smoke test)
+        run: sf --help | head -20
 
   # ============================================================
-  # Summary — runs after all 3 jobs complete
+  # SUMMARY — runs after all 3 pass
   # ============================================================
   summary:
     runs-on: pi5-runners
-    needs: [runner-info, parallel-job-2, parallel-job-3]
+    needs: [test-basic-runner, test-dind-runner, test-custom-sf-runner]
     steps:
-      - name: Summary
+      - name: All runners passed
         run: |
-          echo "All 3 runners completed successfully!"
-          echo "Hostname: $(hostname)"
-          echo "SF CLI:   $(sf --version)"
+          echo "=============================="
+          echo " All 3 runner types verified!"
+          echo "=============================="
+          echo "  pi5-runners          ✓"
+          echo "  pi5-runners-dind     ✓"
+          echo "  pi5-runners-custom-sf ✓"
