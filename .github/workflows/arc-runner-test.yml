@@ -41,15 +41,13 @@ jobs:
 
   # ============================================================
   # RUNNER 2: pi5-runners-dind (Docker-in-Docker)
-  # Tests: docker CLI, running containers inside the workflow
+  # Using alpine (public, ARM64) to isolate dind setup from
+  # any custom image issues.
   # ============================================================
   test-dind-runner:
-    runs-on: pi5-runners-dind  
+    runs-on: pi5-runners-dind
     container:
-      image: gforceinnovation/sf-ci:latest
-      credentials:
-        username: gforceinnovation
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      image: alpine:latest
     steps:
       - name: Host info
         run: |
@@ -57,9 +55,11 @@ jobs:
           echo "Hostname:     $(hostname)"
           echo "Architecture: $(uname -m)"
           echo "CPU cores:    $(nproc)"
-          free -h
-      - name: sf version
-        run: sf --version
+          cat /etc/os-release | head -3
+      - name: Basic tools
+        run: |
+          echo "sh: $(sh --version 2>&1 || echo ok)"
+          echo "cat: $(cat /etc/alpine-release)"
 
   # ============================================================
   # RUNNER 3: pi5-runners-custom-sf (SF CLI pre-installed)
