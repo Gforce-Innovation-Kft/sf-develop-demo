@@ -41,25 +41,39 @@ jobs:
 
   # ============================================================
   # RUNNER 2: pi5-runners-dind (Docker-in-Docker)
-  # Using alpine (public, ARM64) to isolate dind setup from
-  # any custom image issues.
+  #
+  # containerMode: dind gives you a Docker daemon accessible in
+  # steps via DOCKER_HOST. It does NOT support the container:
+  # job directive — that triggers k8s container hooks which need
+  # RBAC permissions the dind service account doesn't have.
+  #
+  # Correct pattern: use docker run / docker build in steps.
   # ============================================================
   test-dind-runner:
     runs-on: pi5-runners-dind
-    container:
-      image: alpine:latest
     steps:
       - name: Host info
         run: |
-          echo "===== HOST ====="
+          echo "===== RUNNER: pi5-runners-dind ====="
           echo "Hostname:     $(hostname)"
           echo "Architecture: $(uname -m)"
           echo "CPU cores:    $(nproc)"
-          cat /etc/os-release | head -3
-      - name: Basic tools
+          free -h
+
+      - name: Docker daemon is reachable
+        run: docker info
+
+      - name: Docker version
+        run: docker --version
+
+      - name: Run a container via docker run
+        run: docker run --rm alpine:latest sh -c "echo 'Inside alpine:' && uname -m && cat /etc/alpine-release"
+
+      - name: Run sf-ci image via docker run
         run: |
-          echo "sh: $(sh --version 2>&1 || echo ok)"
-          echo "cat: $(cat /etc/alpine-release)"
+          docker run --rm \
+            gforceinnovation/sf-ci:latest \
+            sf --version
 
   # ============================================================
   # RUNNER 3: pi5-runners-custom-sf (SF CLI pre-installed)
