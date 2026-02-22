@@ -51,29 +51,31 @@ jobs:
   # ============================================================
   test-dind-runner:
     runs-on: pi5-runners-dind
+    container:
+      image: gforceinnovation/sf-ci:latest
+      credentials:
+        username: gforceinnovation
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Host info
         run: |
-          echo "===== RUNNER: pi5-runners-dind ====="
+          echo "===== HOST ====="
           echo "Hostname:     $(hostname)"
           echo "Architecture: $(uname -m)"
           echo "CPU cores:    $(nproc)"
           free -h
 
-      - name: Docker daemon is reachable
-        run: docker info
+      - name: SF CLI version
+        run: sf --version
 
-      - name: Docker version
-        run: docker --version
+      - name: SF CLI plugins
+        run: sf plugins
 
-      - name: Run a container via docker run
-        run: docker run --rm alpine:latest sh -c "echo 'Inside alpine:' && uname -m && cat /etc/alpine-release"
-
-      - name: Run sf-ci image via docker run
+      - name: Tool versions
         run: |
-          docker run --rm \
-            gforceinnovation/sf-ci:latest \
-            sf --version
+          echo "Node: $(node --version)"
+          java -version
+          echo "jq:   $(jq --version)"
 
   # ============================================================
   # RUNNER 3: pi5-runners-custom-sf (SF CLI pre-installed)
