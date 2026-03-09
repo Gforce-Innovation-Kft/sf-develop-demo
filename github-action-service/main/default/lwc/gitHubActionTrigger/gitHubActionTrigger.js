@@ -9,7 +9,7 @@ export default class GitHubActionTrigger extends LightningElement {
   @track debugInfo = "";
   @track showDebug = false;
 
-  owner = "gforceinnovation";
+  owner = "Gforce-Innovation-Kft";
   repo = "sf-develop-demo";
 
   // Configure your workflows here
@@ -18,7 +18,7 @@ export default class GitHubActionTrigger extends LightningElement {
       label: "Deploy to Staging",
       icon: "utility:upload",
       variant: "brand",
-      owner: "gforceinnovation",
+      owner: "Gforce-Innovation-Kft",
       repo: "sf-develop-demo",
       workflowId: "deploy-staging.yml",
       ref: "main"
@@ -27,7 +27,7 @@ export default class GitHubActionTrigger extends LightningElement {
       label: "Run Tests",
       icon: "utility:check",
       variant: "success",
-      owner: "gforceinnovation",
+      owner: "Gforce-Innovation-Kft",
       repo: "sf-develop-demo",
       workflowId: "run-tests.yml",
       ref: "main"
@@ -36,7 +36,7 @@ export default class GitHubActionTrigger extends LightningElement {
       label: "Build Package",
       icon: "utility:package",
       variant: "neutral",
-      owner: "gforceinnovation",
+      owner: "Gforce-Innovation-Kft",
       repo: "sf-develop-demo",
       workflowId: "build-package.yml",
       ref: "main"

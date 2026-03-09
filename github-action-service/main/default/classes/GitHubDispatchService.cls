@@ -11,7 +11,7 @@ public with sharing class GitHubDispatchService {
    */
   public GitHubDispatchService() {
     // Default values - can be overridden
-    this.owner = 'gforceinnovation';
+    this.owner = 'Gforce-Innovation-Kft';
     this.repo = 'sf-develop-demo';
   }
 
