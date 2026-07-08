@@ -87,7 +87,7 @@ When adding a new SObject, register it in all four factory maps in `Application.
 
 ## CI/CD
 
-GitHub Actions workflow `feature-validation.yml` runs on PRs to `main`/`develop`:
+GitHub Actions workflow `feature-validation.yml` runs on PRs to `main`:
 1. **Code quality job**: ESLint + Prettier checks
 2. **Validate feature job**: creates scratch org, deploys all source, assigns `Weather_Dashboard_Demo_Access` permset, runs Apex tests, validates metadata, then deletes the scratch org
 
