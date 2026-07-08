@@ -90,3 +90,16 @@ When adding a new SObject, register it in all four factory maps in `Application.
 GitHub Actions workflow `feature-validation.yml` runs on PRs to `main`/`develop`:
 1. **Code quality job**: ESLint + Prettier checks
 2. **Validate feature job**: creates scratch org, deploys all source, assigns `Weather_Dashboard_Demo_Access` permset, runs Apex tests, validates metadata, then deletes the scratch org
+
+<!-- skills-tooling -->
+## Skills & AI tooling
+
+**External skills** (lockfile-managed — update with `npx skills check` / `npx skills update`):
+- `experience-lwc-generate` — from forcedotcom/sf-skills
+- `platform-apex-logs-debug` — from forcedotcom/sf-skills
+- `platform-apex-test-run` — from forcedotcom/sf-skills
+- `platform-docs-get` — from forcedotcom/sf-skills
+- `platform-metadata-deploy` — from forcedotcom/sf-skills
+
+**Global tooling available in every session:** lean-ctx (prefer `ctx_*` MCP tools for reads/search/shell — token-compressed), superpowers process skills, and graphify (no graph built for this repo).
+<!-- /skills-tooling -->

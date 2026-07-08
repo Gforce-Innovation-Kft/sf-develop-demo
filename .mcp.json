@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "salesforce": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@salesforce/mcp",
+        "--orgs",
+        "DEFAULT_TARGET_DEV_HUB",
+        "--toolsets",
+        "all"
+      ]
+    }
+  }
+}
