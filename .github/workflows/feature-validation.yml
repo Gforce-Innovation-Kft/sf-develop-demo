@@ -7,10 +7,9 @@ on:
       target_branch:
         description: "Target branch to validate"
         required: false
-        default: "develop"
+        default: "main"
         type: choice
         options:
-          - develop
           - main
       scratch_org_duration:
         description: "Scratch org duration (days)"
@@ -36,7 +35,7 @@ on:
   # Trigger on PR events (only when opened or reopened)
   pull_request:
     types: [opened, reopened]
-    branches: [main, develop]
+    branches: [main]
     paths:
       - "weather-app/**"
       - "apex-common/**"
@@ -77,7 +76,7 @@ jobs:
           echo "- **Deploy Only:** ${{ env.DEPLOY_ONLY }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "- **Manual Trigger by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Target Branch:** ${{ github.event.inputs.target_branch || 'develop' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Branch:** ${{ github.event.inputs.target_branch || 'main' }}" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: 📦 Setup Node.js
