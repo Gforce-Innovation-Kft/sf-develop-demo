@@ -15,7 +15,7 @@ Use this guide when prompting Copilot so it stays consistent with the patterns i
 - `weather-app/main/default/classes/WeatherServiceImpl.cls` (service pattern)
 - `weather-app/main/default/classes/WeatherDashboardController.cls` (controller pattern)
 - `weather-app/main/default/lwc/weatherDashboard/` (LWC pattern)
-- `apex-mocks/test/classes/fflib_ApexMocksTest.cls` (ApexMocks usage)
+- `fflib-apex-mocks/sfdx-source/apex-mocks/test/classes/fflib_ApexMocksTest.cls` (ApexMocks usage)
 
 ## Good prompt shape
 - State the target package: `github-action-service` or `weather-app`
@@ -36,7 +36,8 @@ Example
 - Bulk safe Apex and no SOQL/DML inside loops
 - LWC uses `@wire` for reads and imperative calls for actions
 - Use Unit of Work for DML and selectors for queries
-- Use apex-mocks for unit tests
+- Use fflib_ApexMocks for unit tests; read its API under `fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/`
+- Never edit anything under `fflib-apex-common/` or `fflib-apex-mocks/` — they are upstream submodules
 
 ## Templates
 Use the templates under `docs/templates/` as starting points for new Apex and LWC code.

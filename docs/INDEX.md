@@ -129,8 +129,8 @@ sf-develop-demo/
 │       ├── SECURITY.md                # Security guide
 │       └── QUICKREF.md                # Quick reference
 │   └── templates/                     # Apex and LWC templates
-├── apex-common/                       # fflib patterns
-├── apex-mocks/                        # Testing framework
+├── fflib-apex-common/                 # fflib patterns (git submodule)
+├── fflib-apex-mocks/                  # Testing framework (git submodule)
 ├── github-action-service/             # GitHub integration package
 │   └── main/default/
 │       ├── classes/                   # Apex classes

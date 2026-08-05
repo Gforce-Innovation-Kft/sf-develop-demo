@@ -38,8 +38,9 @@ on:
     branches: [main]
     paths:
       - "weather-app/**"
-      - "apex-common/**"
-      - "apex-mocks/**"
+      - "fflib-apex-common"
+      - "fflib-apex-mocks"
+      - ".gitmodules"
       - "sfdx-project.json"
       - "config/**"
 
@@ -64,6 +65,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # fflib (apex-common / apex-mocks) is vendored as git submodules
+          submodules: recursive
 
       - name: 📋 Display Workflow Context
         run: |
@@ -270,6 +273,8 @@ jobs:
     steps:
       - name: 🔄 Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
