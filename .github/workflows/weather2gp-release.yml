@@ -55,6 +55,13 @@ jobs:
     with:
       package: weather-app
       scratch-org-definition: config/project-scratch-def.json
+      # Deploy only what this release needs. Omitting this deploys every
+      # packageDirectories entry, and github-action-service has a `replacements`
+      # block requiring GITHUB_PRIVATE_KEY_BASE64, which CI does not set.
+      source-dirs: >-
+        fflib-apex-mocks/sfdx-source/apex-mocks
+        fflib-apex-common/sfdx-source/apex-common
+        weather-app
       # On a push event `inputs` is null, and GitHub casts both null and false
       # to 0 — so `inputs.x != false` would be FALSE on every push. Gate on the
       # event name so push gets the intended defaults.
