@@ -81,7 +81,7 @@ print_status "Creating scratch org with alias '$SCRATCH_ORG_ALIAS'..."
 sf org create scratch \
     --definition-file config/project-scratch-def.json \
     --alias "github1" \
-    --target-dev-hub "gforce-dev" \
+    --target-dev-hub "gabor_dev" \
     --duration-days "10" \
     --set-default \
     --wait 10
