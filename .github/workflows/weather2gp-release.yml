@@ -18,7 +18,10 @@ name: weather2GP Release
 
 on:
   push:
-    branches: [main]
+    # TEST SCAFFOLD — the feature branch entry exists only so this can be
+    # exercised before merge (workflow_dispatch requires the file to be on the
+    # default branch). Remove it before merging.
+    branches: [main, feature/weather2gp-release-flow]
   workflow_dispatch:
     inputs:
       run-validate:
@@ -52,11 +55,16 @@ jobs:
     with:
       package: weather-app
       scratch-org-definition: config/project-scratch-def.json
-      run-validate: ${{ inputs.run-validate != false }}
+      # On a push event `inputs` is null, and GitHub casts both null and false
+      # to 0 — so `inputs.x != false` would be FALSE on every push. Gate on the
+      # event name so push gets the intended defaults.
+      run-validate: ${{ github.event_name != 'workflow_dispatch' || inputs.run-validate }}
       # weather-app ships no Apex test classes, so coverage computes to 0% and
       # only costs build time. Unlocked packages have no coverage gate.
       code-coverage: false
-      skip-validation: ${{ inputs.skip-validation == true }}
-      create-github-release: ${{ inputs.create-github-release != false }}
+      # TEST SCAFFOLD — forced true because Package2VersionCreates is 0/6 today.
+      # Restore to: ${{ github.event_name == 'workflow_dispatch' && inputs.skip-validation }}
+      skip-validation: true
+      create-github-release: ${{ github.event_name != 'workflow_dispatch' || inputs.create-github-release }}
     secrets:
       sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
