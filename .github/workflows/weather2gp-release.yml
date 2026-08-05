@@ -1,16 +1,17 @@
-# weather2GP Release
+# weather2GP Release — thin caller.
 #
-# Phase 1 of docs/superpowers/specs/2026-08-06-weather2gp-release-flow-design.md:
-# one workflow, four jobs. Phase 2 extracts the marked seams into
-# shared-github-actions as sf-scratch-org + sf-package-install composite actions
-# and an sf-package-release reusable workflow.
+# All logic lives in shared-github-actions:
+#   .github/workflows/sf-package-release.yml   validate -> package -> release
+#   .github/actions/sf-scratch-org             org create + capacity preflight
+#   .github/actions/sf-package-create          version create + provenance tag
+#   .github/actions/sf-org-login               Dev Hub auth
 #
-# Job order is driven by cost, not convenience. Scratch orgs are effectively
-# free; the Dev Hub allows only 6 validated package version creates per day.
-# `validate` therefore runs first, so a tree that does not compile costs zero
-# package creates.
+# Budget: ONE scratch org per run (the validate job). The package job needs only
+# the Dev Hub. Dev Hub caps are ActiveScratchOrgs 3, DailyScratchOrgs 6, and
+# Package2VersionCreates 6/day — hence skip-validation as an escape hatch when
+# the validated pool is spent.
 #
-# Required secret: SFDX_AUTH_URL — Dev Hub (gabor_dev) auth URL.
+# Required secret: SFDX_AUTH_URL — Dev Hub (gabor_dev).
 #   sf org display --target-org gabor_dev --verbose --json | jq -r '.result.sfdxAuthUrl'
 
 name: weather2GP Release
@@ -20,16 +21,21 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      skip-install-test:
-        description: "Build the version but skip the install verification (no GitHub Release will be cut)"
+      run-validate:
+        description: "Run the scratch-org validation job (costs 1 scratch org)"
+        required: false
+        default: true
+        type: boolean
+      skip-validation:
+        description: "Build with --skip-validation (500/day pool instead of the 6/day one)"
         required: false
         default: false
         type: boolean
-      wait-minutes:
-        description: "Minutes to wait for the package version build"
+      create-github-release:
+        description: "Cut a GitHub Release on the provenance tag"
         required: false
-        default: "60"
-        type: string
+        default: true
+        type: boolean
 
 # Never cancel in progress: a cancelled run can orphan a scratch org and abandon
 # a package version create that has already consumed daily quota.
@@ -37,479 +43,20 @@ concurrency:
   group: weather2gp-release-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  SF_CI_IMAGE: gforceinnovation/sf-ci:latest
-  PACKAGE_NAME: weather-app
-  PERMISSION_SET: Weather_Dashboard_Demo_Access
-  SCRATCH_DEF: config/project-scratch-def.json
-  SMOKE_APEX: scripts/smoke/weather-app-smoke.apex
-
 jobs:
-  # ---------------------------------------------------------------------------
-  # validate — prove the tree deploys and is green BEFORE spending quota.
-  # Phase 2 seam: scratch org create/delete -> sf-scratch-org action.
-  # ---------------------------------------------------------------------------
-  validate:
-    name: Validate source in scratch org
-    runs-on: ubuntu-latest
-    container:
-      image: gforceinnovation/sf-ci:latest
-      # Runner file-command dirs are owned by the host runner user; non-root
-      # container users hit EACCES without this.
-      options: --user root
-    permissions:
-      contents: read
-    steps:
-      - name: Check out files
-        uses: actions/checkout@v7
-        with:
-          # fflib lives in submodules — without this the Apex build cannot compile.
-          submodules: recursive
-
-      - name: Salesforce Dev Hub login
-        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@v1
-        with:
-          sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
-          org-alias: devhub
-          set-default-dev-hub: "true"
-
-     
-
-      - name: Create scratch org
-        shell: bash
-        run: |
-          set -euo pipefail
-          sf org create scratch \
-            --definition-file "$SCRATCH_DEF" \
-            --alias build-check \
-            --duration-days 1 \
-            --set-default \
-            --wait 30
-
-      - name: Push source
-        shell: bash
-        run: |
-          set -euo pipefail
-          sf project deploy start --target-org build-check --wait 60
-
-      - name: Assign permission sets
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s globstar nullglob
-          FOUND=0
-          for PS_FILE in **/permissionsets/*.permissionset-meta.xml; do
-            PS_NAME=$(basename "$PS_FILE" .permissionset-meta.xml)
-            FOUND=1
-            sf org assign permset --name "$PS_NAME" --target-org build-check \
-              || echo "::warning::Could not assign permission set $PS_NAME"
-          done
-          [ "$FOUND" -eq 1 ] || echo "::notice::No permission sets found to assign."
-
-      - name: Run Apex tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          # weather-app ships no test classes of its own; RunLocalTests here
-          # exercises fflib and github-action-service. This job proves the tree
-          # DEPLOYS — install-test proves weather-app BEHAVES.
-          sf apex run test \
-            --target-org build-check \
-            --test-level RunLocalTests \
-            --wait 30 \
-            --result-format human \
-            --code-coverage | tee validate-tests.txt
-          {
-            echo '## Validate — Apex test results'
-            echo '```'
-            tail -n 40 validate-tests.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: validate-tests-${{ github.run_number }}
-          path: validate-tests.txt
-          retention-days: 30
-          if-no-files-found: ignore
-
-      # Composite actions cannot declare post: steps, so cleanup is the caller's
-      # contract — this stays an explicit always() step after Phase 2.
-      - name: Delete scratch org
-        if: always()
-        shell: bash
-        run: sf org delete scratch --target-org build-check --no-prompt || true
-
-  # ---------------------------------------------------------------------------
-  # package — the only job that spends package-create quota.
-  # ---------------------------------------------------------------------------
-  package:
-    name: Create package version
-    needs: validate
-    runs-on: ubuntu-latest
-    container:
-      image: gforceinnovation/sf-ci:latest
-      options: --user root
-    permissions:
-      # sf-package-create pushes the annotated pkg/<package>/<version> tag.
-      contents: write
-    outputs:
-      version-id: ${{ steps.create.outputs.version-id }}
-      version-number: ${{ steps.create.outputs.version-number }}
-      package-version-id: ${{ steps.create.outputs.package-version-id }}
-      request-id: ${{ steps.create.outputs.request-id }}
-      git-tag: ${{ steps.create.outputs.git-tag }}
-    steps:
-      - name: Check out files
-        uses: actions/checkout@v7
-        with:
-          submodules: recursive
-          # The provenance tag step needs history to resolve refs.
-          fetch-depth: 0
-
-      - name: Salesforce Dev Hub login
-        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@v1
-        with:
-          sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
-          org-alias: devhub
-          set-default-dev-hub: "true"
-
-      - name: Create package version
-        id: create
-        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-package-create@v1
-        with:
-          package: weather-app
-          dev-hub-alias: devhub
-          wait-minutes: ${{ inputs.wait-minutes || '60' }}
-          # weather-app contains no Apex test classes, so coverage computes to 0%
-          # and only costs build time. Unlocked packages have no coverage gate.
-          code-coverage: "false"
-          # Stay on the 6/day validated pool deliberately — this is a release.
-          skip-validation: "false"
-          # installation-key left empty => --installation-key-bypass
-          push-tag: "true"
-
-      - name: Upload failure evidence
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: package-create-evidence-${{ github.run_number }}
-          path: evidence/
-          retention-days: 30
-          if-no-files-found: ignore
-
-      - name: Summarise
-        if: success()
-        shell: bash
-        env:
-          VERSION_ID: ${{ steps.create.outputs.version-id }}
-          VERSION_NUMBER: ${{ steps.create.outputs.version-number }}
-          GIT_TAG: ${{ steps.create.outputs.git-tag }}
-        run: |
-          set -euo pipefail
-          {
-            echo '## Package version created'
-            echo ''
-            echo '| Field | Value |'
-            echo '|---|---|'
-            echo "| Package | \`$PACKAGE_NAME\` |"
-            echo "| Version | \`$VERSION_NUMBER\` |"
-            echo "| Version Id | \`$VERSION_ID\` |"
-            echo "| Commit | \`${GITHUB_SHA:0:12}\` |"
-            echo "| Tag | \`${GIT_TAG:-(already existed)}\` |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  # ---------------------------------------------------------------------------
-  # install-test — prove the version installs and RUNS in a clean org.
-  # Phase 2 seams: scratch org -> sf-scratch-org, resolve+install -> sf-package-install.
-  # ---------------------------------------------------------------------------
-  install-test:
-    name: Install into clean scratch org
-    needs: package
-    if: ${{ inputs.skip-install-test != true }}
-    runs-on: ubuntu-latest
-    container:
-      image: gforceinnovation/sf-ci:latest
-      options: --user root
-    permissions:
-      contents: read
-    outputs:
-      installed-ids: ${{ steps.install.outputs.installed-ids }}
-      install-count: ${{ steps.install.outputs.install-count }}
-    steps:
-      - name: Check out files
-        uses: actions/checkout@v7
-
-      - name: Salesforce Dev Hub login
-        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@v1
-        with:
-          sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
-          org-alias: devhub
-          set-default-dev-hub: "true"
-
-      - name: Create clean scratch org
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Must be CLEAN — the validate org already has the source pushed, which
-          # would mask a package that installs nothing.
-          sf org create scratch \
-            --definition-file "$SCRATCH_DEF" \
-            --alias install-test \
-            --duration-days 1 \
-            --wait 30
-
-      - name: Resolve dependencies and install
-        id: install
-        shell: bash
-        env:
-          VERSION_ID: ${{ needs.package.outputs.version-id }}
-        run: |
-          set -euo pipefail
-
-          # The Dev Hub knows the flattened chain in install order — no hardcoded
-          # 04t list, no sfdx-project.json parsing.
-          sf data query --use-tooling-api --target-org devhub --json \
-            --query "SELECT Dependencies FROM SubscriberPackageVersion WHERE Id = '$VERSION_ID'" \
-            > sf-deps.json
-
-          mapfile -t DEP_IDS < <(node <<'NODE'
-          const fs = require('node:fs');
-          const records = JSON.parse(fs.readFileSync('sf-deps.json', 'utf8')).result?.records ?? [];
-          const ids = records[0]?.Dependencies?.ids ?? [];
-          for (const dep of ids) console.log(dep.subscriberPackageVersionId);
-          NODE
-          )
-
-          echo "Dependency chain (install order): ${DEP_IDS[*]:-none}"
-
-          # sf package install errors on an already-installed version, so check first.
-          sf package installed list --target-org install-test --json > sf-installed.json || echo '{}' > sf-installed.json
-
-          INSTALLED=()
-          for PKG in "${DEP_IDS[@]}" "$VERSION_ID"; do
-            ALREADY=$(PKG="$PKG" node -e "
-              const fs = require('node:fs');
-              const rows = JSON.parse(fs.readFileSync('sf-installed.json','utf8')).result ?? [];
-              process.stdout.write(rows.some(r => r.SubscriberPackageVersionId === process.env.PKG) ? 'yes' : 'no');
-            ")
-            if [ "$ALREADY" = "yes" ]; then
-              echo "::notice::$PKG already installed — skipping."
-            else
-              echo "Installing $PKG ..."
-              # --publish-wait is mandatory: a version created minutes ago is not
-              # yet installable and fails with "not fully available" without it.
-              # --apex-compile all recompiles every Apex class in the org, so a
-              # broken dependency chain fails here instead of silently passing.
-              sf package install \
-                --package "$PKG" \
-                --target-org install-test \
-                --wait 20 \
-                --publish-wait 20 \
-                --no-prompt \
-                --apex-compile all \
-                --security-type AdminsOnly
-            fi
-            INSTALLED+=("$PKG")
-          done
-
-          printf '%s\n' "${INSTALLED[@]}" | node -e "
-            const lines = require('fs').readFileSync(0,'utf8').split('\n').filter(Boolean);
-            console.log('installed-ids=' + JSON.stringify(lines));
-            console.log('install-count=' + lines.length);
-          " >> "$GITHUB_OUTPUT"
-
-          sf package installed list --target-org install-test --json > install-test-results.json
-
-      - name: Assign permission set
-        shell: bash
-        run: |
-          set -euo pipefail
-          sf org assign permset --name "$PERMISSION_SET" --target-org install-test
-
-      - name: Run smoke test
-        shell: bash
-        run: |
-          set -euo pipefail
-          # A failed System.assert aborts the anonymous block and exits non-zero.
-          sf apex run --file "$SMOKE_APEX" --target-org install-test | tee smoke-apex.log
-          grep -q 'SMOKE_OK' smoke-apex.log \
-            || { echo "::error::Smoke test did not reach SMOKE_OK — package is installed but not functional." >&2; exit 1; }
-          {
-            echo '## Install test — PASSED'
-            echo ''
-            echo '```'
-            tail -n 20 smoke-apex.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload install-test results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: install-test-${{ github.run_number }}
-          path: |
-            install-test-results.json
-            smoke-apex.log
-            sf-deps.json
-          retention-days: 30
-          if-no-files-found: ignore
-
-      - name: Delete scratch org
-        if: always()
-        shell: bash
-        run: sf org delete scratch --target-org install-test --no-prompt || true
-
-  # ---------------------------------------------------------------------------
-  # release — manifest artifact always; GitHub Release only when verified.
-  # No Salesforce CLI needed, so no container.
-  # ---------------------------------------------------------------------------
   release:
-    name: Publish release
-    needs: [package, install-test]
-    if: ${{ always() && needs.package.result == 'success' }}
-    runs-on: ubuntu-latest
+    # TEST REF — must become @v1 before this merges to main.
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/sf-package-release.yml@refactor/simplify-sf-package-create
     permissions:
       contents: write
-    steps:
-      - name: Check out files
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Download install-test results
-        if: ${{ needs.install-test.result == 'success' }}
-        uses: actions/download-artifact@v7
-        with:
-          name: install-test-${{ github.run_number }}
-          path: install-test/
-        continue-on-error: true
-
-      - name: Build release manifest
-        id: manifest
-        shell: bash
-        env:
-          VERSION_ID: ${{ needs.package.outputs.version-id }}
-          VERSION_NUMBER: ${{ needs.package.outputs.version-number }}
-          PACKAGE_VERSION_ID: ${{ needs.package.outputs.package-version-id }}
-          REQUEST_ID: ${{ needs.package.outputs.request-id }}
-          GIT_TAG: ${{ needs.package.outputs.git-tag }}
-          INSTALLED_IDS: ${{ needs.install-test.outputs.installed-ids }}
-          INSTALL_RESULT: ${{ needs.install-test.result }}
-        run: |
-          set -euo pipefail
-          VERIFIED=$([ "$INSTALL_RESULT" = "success" ] && echo true || echo false)
-          echo "verified=$VERIFIED" >> "$GITHUB_OUTPUT"
-
-          node <<'NODE' > release-manifest.json
-          const env = process.env;
-          const installed = (() => {
-            try { return JSON.parse(env.INSTALLED_IDS || '[]'); } catch { return []; }
-          })();
-          console.log(JSON.stringify({
-            schemaVersion: 1,
-            package: env.PACKAGE_NAME,
-            versionNumber: env.VERSION_NUMBER,
-            subscriberPackageVersionId: env.VERSION_ID,
-            package2VersionId: env.PACKAGE_VERSION_ID,
-            createRequestId: env.REQUEST_ID,
-            gitTag: env.GIT_TAG || null,
-            commit: env.GITHUB_SHA,
-            verified: env.INSTALL_RESULT === 'success',
-            installTestResult: env.INSTALL_RESULT,
-            // Ordered: dependencies first, the package itself last.
-            installOrder: installed,
-            runUrl: `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}`,
-            createdAt: new Date().toISOString(),
-          }, null, 2));
-          NODE
-
-          cat release-manifest.json
-
-      - name: Upload release manifest
-        uses: actions/upload-artifact@v7
-        with:
-          name: weather-app-release-${{ github.run_number }}
-          path: |
-            release-manifest.json
-            install-test/
-          retention-days: 90
-          if-no-files-found: warn
-
-      - name: Create GitHub Release
-        # The Release IS the verified signal. No Release means do not install.
-        if: ${{ needs.install-test.result == 'success' && needs.package.outputs.git-tag != '' }}
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GIT_TAG: ${{ needs.package.outputs.git-tag }}
-          VERSION_ID: ${{ needs.package.outputs.version-id }}
-          VERSION_NUMBER: ${{ needs.package.outputs.version-number }}
-          INSTALLED_IDS: ${{ needs.install-test.outputs.installed-ids }}
-        run: |
-          set -euo pipefail
-
-          # Quoted 'NODE' delimiter: bash performs no expansion inside, so JS
-          # template literals like ${id} reach node intact.
-          node <<'NODE' > deps.md
-          const ids = (() => {
-            try { return JSON.parse(process.env.INSTALLED_IDS || '[]'); } catch { return []; }
-          })();
-          // The last entry is the package itself; everything before it is a dependency.
-          const deps = ids.slice(0, -1);
-          console.log(deps.length
-            ? deps.map((id, i) => `${i + 1}. \`${id}\``).join('\n')
-            : '_None._');
-          NODE
-
-          cat > release-notes.md <<EOF
-          ## $PACKAGE_NAME $VERSION_NUMBER
-
-          | | |
-          |---|---|
-          | Version Id | \`$VERSION_ID\` |
-          | Commit | \`$GITHUB_SHA\` |
-          | Verified | install test **PASSED** |
-
-          ### Install
-
-          Dependencies are **not** transitive — install them first, in this order:
-
-          $(cat deps.md)
-
-          Then the package:
-
-          \`\`\`bash
-          sf package install --package $VERSION_ID \\
-            --target-org <alias> --wait 20 --publish-wait 20 --no-prompt
-          sf org assign permset --name $PERMISSION_SET --target-org <alias>
-          \`\`\`
-
-          [Workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
-          EOF
-
-          if gh release view "$GIT_TAG" >/dev/null 2>&1; then
-            echo "::notice::Release $GIT_TAG already exists — leaving it untouched."
-          else
-            gh release create "$GIT_TAG" \
-              --title "$PACKAGE_NAME $VERSION_NUMBER" \
-              --notes-file release-notes.md \
-              release-manifest.json
-            echo "::notice::Published release $GIT_TAG"
-          fi
-
-      - name: Report unverified build
-        if: ${{ needs.install-test.result != 'success' }}
-        shell: bash
-        run: |
-          {
-            echo '## Release withheld'
-            echo ''
-            echo "Version \`${{ needs.package.outputs.version-id }}\` was created and tagged, but the"
-            echo "install test did not pass (\`${{ needs.install-test.result }}\`)."
-            echo ''
-            echo 'The tag stays — it records what was built. No GitHub Release was cut, which is'
-            echo 'the signal not to install this version.'
-          } >> "$GITHUB_STEP_SUMMARY"
+    with:
+      package: weather-app
+      scratch-org-definition: config/project-scratch-def.json
+      run-validate: ${{ inputs.run-validate != false }}
+      # weather-app ships no Apex test classes, so coverage computes to 0% and
+      # only costs build time. Unlocked packages have no coverage gate.
+      code-coverage: false
+      skip-validation: ${{ inputs.skip-validation == true }}
+      create-github-release: ${{ inputs.create-github-release != false }}
+    secrets:
+      sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
