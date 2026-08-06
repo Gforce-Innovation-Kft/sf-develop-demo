@@ -2,12 +2,15 @@
   "name": "Salesforce Development",
   "image": "gforceinnovation/sf-devcontainer:latest",
 
-  // The host's Salesforce auth is shared, not copied: logging in on either
-  // side persists to both. Note this exposes EVERY org you have authorized,
-  // production included, to anything running in this container.
+  // Org auth lives in named Docker volumes, NOT a bind mount of the host's
+  // ~/.sf or ~/.sfdx. Those files are encrypted with the HOST OS's keychain
+  // (e.g. macOS Keychain), which this Linux container cannot read — bind-mounting
+  // them in causes every org to fail `sf org list` with AuthDecryptError. Log in
+  // once *inside* the container (see .devcontainer/post-create.sh); the named
+  // volumes below keep it there across rebuilds, isolated from host credentials.
   "mounts": [
-    "source=${localEnv:HOME}/.sf,target=/home/vscode/.sf,type=bind",
-    "source=${localEnv:HOME}/.sfdx,target=/home/vscode/.sfdx,type=bind",
+    "source=sf-develop-demo-sf-config,target=/home/vscode/.sf,type=volume",
+    "source=sf-develop-demo-sfdx-config,target=/home/vscode/.sfdx,type=volume",
     "source=sf-develop-demo-history,target=/commandhistory,type=volume"
   ],
 
@@ -36,5 +39,5 @@
   },
 
   "remoteUser": "vscode",
-  "postCreateCommand": "npm install && .devcontainer/post-create.sh"
+  "postCreateCommand": "sudo chown vscode:vscode /commandhistory 2>/dev/null; npm install && .devcontainer/post-create.sh"
 }

@@ -28,6 +28,13 @@ triggers a local build.
 
 ### Shell Environment
 
+> **Version note:** the Starship-based shell described below ships in
+> `gforceinnovation/sf-devcontainer` **v3.0.0, which has not been released
+> yet**. `devcontainer.json` pulls `:latest`, which today resolves to
+> **v2.0.0** and still has Oh My Zsh + Powerlevel10k. Treat this section as
+> the target state, not necessarily what you'll see until v3.0.0 ships and
+> `:latest` moves.
+
 - **Zsh** - default shell, with a **Starship** prompt (no Oh My Zsh, no
   Powerlevel10k)
 - **Plugins**, sourced directly (not via a framework): `zsh-autosuggestions`,
@@ -64,43 +71,57 @@ triggers a local build.
 
 ## 🔐 Salesforce Authentication
 
-**Auth is inherited from the host, not created in the container.** The host's
-`~/.sf` and `~/.sfdx` directories are bind-mounted into the container
-(`devcontainer.json` → `mounts`), so a login done on either side is visible on
-both:
+**Auth is created and kept inside the container, isolated from your host.**
+`~/.sf` and `~/.sfdx` are **named Docker volumes** (`devcontainer.json` →
+`mounts`), not a bind mount of your host directories — so it persists across
+rebuilds, but a login on your host machine is **not** visible in the
+container and vice versa.
 
-- Log in once on your host machine:
+> **Why not just bind-mount the host's `~/.sf`?** That was the previous setup,
+> and it's broken: `sf`'s stored auth tokens are encrypted with a key from the
+> host OS's keychain (e.g. macOS Keychain). A Linux container can't read that
+> keychain, so every org fails `sf org list` with `AuthDecryptError` — the
+> credentials are *present* but undecryptable. Named volumes sidestep this
+> entirely: the container creates and reads its own auth with its own key,
+> and it never has to cross the host/container boundary.
+
+- Log in from **inside the container**:
 
   ```bash
   sf org login web --alias myorg --set-default
   ```
 
-  The container sees that authorization immediately — no need to log in again
-  inside the container.
+  or non-interactively via an auth URL obtained on any machine already logged
+  in (`sf org display --target-org <alias> --verbose --json | jq -r .result.sfdxAuthUrl`):
 
-- A login run *inside* the container (`sf org login web ...`) writes to the
-  same bind-mounted directory, so it persists back to the host too.
+  ```bash
+  echo "$SF_AUTH_URL" | sf org login sfdx-url --sfdx-url-stdin --alias myorg --set-default
+  ```
 
-**This means the container has access to every org you have authorized on the
-host, including production.** There is no isolation between host and
-container credentials — treat the container with the same care you'd give
-your host shell.
+- It survives `Rebuild Container` (the volume isn't touched by a rebuild) but
+  **not** `Rebuild Container Without Cache` combined with removing the
+  volumes, or `docker volume rm sf-develop-demo-sf-config sf-develop-demo-sfdx-config`.
+
+**This means the container does NOT have access to orgs you've only
+authorized on the host** — including if you were relying on that before this
+change. Log in once inside the container per org you need here; production
+access is now scoped to whichever container you explicitly authorize.
 
 ### `post-create.sh`
 
 Runs automatically at container creation (via `postCreateCommand`). It:
 
-1. Verifies `~/.sf` is actually mounted (fails with a clear message if not).
-2. Reads the current `target-org` from `sf config get target-org`. Since
-   `.sf/` is gitignored and never reaches a fresh clone, it falls back to the
+1. Reads the current `target-org` from `sf config get target-org`. Since
+   `.sf/` is gitignored and a fresh volume starts empty, it falls back to the
    `SF_DEFAULT_ORG_ALIAS` value set in `devcontainer.json`
    (`containerEnv`) if no target-org is configured yet.
-3. Verifies the resolved org is actually authorized (`sf org display`). If
-   it isn't, the script exits non-zero and prints the exact
-   `sf org login web --alias <org> --set-default` command to run.
+2. Verifies the resolved org is actually authorized (`sf org display`). If
+   it isn't — expected on a brand-new volume — the script exits non-zero and
+   prints the exact `sf org login web --alias <org> --set-default` command
+   to run, **inside the container**.
 
-If you see that failure, log in (on the host or in the container — either
-works) and re-run `.devcontainer/post-create.sh`, or reopen the container.
+If you see that failure, log in inside the container and re-run
+`.devcontainer/post-create.sh`, or reopen the container.
 
 ## 🛠️ Useful Commands
 
@@ -137,7 +158,9 @@ There's no Dockerfile to edit or rebuild. Two supported ways to customize:
 - **VS Code's `dotfiles.repository` setting** - for a full personal dotfiles
   setup applied automatically on container creation.
 
-`p10k configure` is not available — there is no Powerlevel10k in this image.
+`p10k configure` is not available once on sf-devcontainer ≥ 3.0.0 (Starship
+replaces Powerlevel10k — see the version note under Shell Environment above).
+On the current `:latest` (v2.0.0), Powerlevel10k is still present.
 
 ## 🔍 Troubleshooting
 
@@ -149,11 +172,15 @@ There's no Dockerfile to edit or rebuild. Two supported ways to customize:
 
 ### `post-create.sh` fails with "org is NOT authorized"
 
-- This is expected the first time you use a new alias, or if your host
-  session expired. Follow the `sf org login web ...` command the script
-  prints, then re-run `.devcontainer/post-create.sh`.
-- If it fails with "`~/.sf` is not mounted" instead, check the `mounts` entry
-  in `.devcontainer/devcontainer.json` and rebuild the container.
+- Expected the first time you use a new alias, or on a fresh
+  `sf-develop-demo-sf-config`/`sf-develop-demo-sfdx-config` volume (e.g. after
+  `docker volume rm` or a first-ever container start). Follow the
+  `sf org login web ...` command the script prints — run it **inside the
+  container**, not on the host — then re-run `.devcontainer/post-create.sh`.
+- Getting `AuthDecryptError` instead of "NOT authorized"? That means a login
+  from a *different* environment (old host bind mount, a different machine)
+  ended up in this volume. Re-run `sf org login web --alias <org> --set-default`
+  inside this container to overwrite it with a decryptable one.
 
 ## 📚 Additional Resources
 
@@ -166,7 +193,7 @@ There's no Dockerfile to edit or rebuild. Two supported ways to customize:
 ```bash
 # Inside the dev container
 
-# 1. List authenticated orgs (inherited from the host)
+# 1. List authenticated orgs (authorized inside this container)
 sfl
 
 # 2. Deploy the weather-app package
