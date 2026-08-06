@@ -24,6 +24,12 @@
 
 name: weather2GP Release
 
+# The e2e-run-id suffix is how an external caller correlates its dispatch with
+# the run it produced: `gh workflow run` returns no run id, and picking "the
+# most recent run" races when two dispatches overlap.
+run-name: >-
+  weather2GP Release${{ inputs.e2e-run-id && format(' [e2e {0}]', inputs.e2e-run-id) || '' }}
+
 on:
   push:
     branches: [main]
@@ -49,6 +55,21 @@ on:
         required: false
         default: false
         type: boolean
+      container-image:
+        description: "Docker image the Salesforce jobs run in. Overridden by the sf-docker-images E2E to test a candidate image before it is published."
+        required: false
+        default: "gforceinnovation/sf-ci:latest"
+        type: string
+      container-user:
+        description: 'Container job user. "1001" runs unprivileged as the runner UID; "root" is the legacy behaviour.'
+        required: false
+        default: "root"
+        type: string
+      e2e-run-id:
+        description: "Correlation id supplied by an external caller so it can find this run. Surfaced in run-name; has no effect on the release itself."
+        required: false
+        default: ""
+        type: string
 
 # Never cancel in progress: a cancelled run can orphan a scratch org and abandon
 # a package version create that has already consumed daily quota.
@@ -86,6 +107,10 @@ jobs:
       code-coverage: false
       skip-validation: ${{ github.event_name == 'workflow_dispatch' && inputs.skip-validation }}
       create-github-release: ${{ github.event_name != 'workflow_dispatch' || inputs.create-github-release }}
+      # On a push event `inputs` is null, so fall back to the published image
+      # and the legacy privileged user rather than passing an empty string.
+      container-image: ${{ (github.event_name == 'workflow_dispatch' && inputs.container-image) || 'gforceinnovation/sf-ci:latest' }}
+      container-user: ${{ (github.event_name == 'workflow_dispatch' && inputs.container-user) || 'root' }}
     secrets:
       sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
       # Only forwarded when explicitly asked for, so a normal run can never
