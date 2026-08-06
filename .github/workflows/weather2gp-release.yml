@@ -36,6 +36,11 @@ on:
         required: false
         default: true
         type: boolean
+      reuse-scratch-org:
+        description: "Validate in the pre-authorised debug org (SCRATCH_ORG_AUTH_URL) instead of creating one"
+        required: false
+        default: false
+        type: boolean
 
 # Never cancel in progress: a cancelled run can orphan a scratch org and abandon
 # a package version create that has already consumed daily quota.
@@ -45,8 +50,13 @@ concurrency:
 
 jobs:
   release:
-    # Requires shared-github-actions to be merged and v1 retagged.
-    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/sf-package-release.yml@v1
+    # Pinned to @develop, not @v1, on purpose. The v1 tag predates every
+    # Salesforce action in shared-github-actions — it carries only the four
+    # original workflows — so @v1 fails to resolve before a single step runs.
+    # ADR 0002 also renamed this file to reusable-sf-package-release.yml, a name
+    # that exists on develop and on no tag. Move this to @v1 once a release
+    # ships that carries the sf-* actions.
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/reusable-sf-package-release.yml@develop
     permissions:
       contents: write
     with:
@@ -70,3 +80,6 @@ jobs:
       create-github-release: ${{ github.event_name != 'workflow_dispatch' || inputs.create-github-release }}
     secrets:
       sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
+      # Only forwarded when explicitly asked for, so a normal run can never
+      # accidentally validate in — and leave behind — the debug org.
+      scratch-org-auth-url: ${{ (github.event_name == 'workflow_dispatch' && inputs.reuse-scratch-org) && secrets.SCRATCH_ORG_AUTH_URL || '' }}
