@@ -1,16 +1,26 @@
 {
   "name": "Salesforce Development",
   "image": "gforceinnovation/sf-devcontainer:latest",
+
+  // The host's Salesforce auth is shared, not copied: logging in on either
+  // side persists to both. Note this exposes EVERY org you have authorized,
+  // production included, to anything running in this container.
+  "mounts": [
+    "source=${localEnv:HOME}/.sf,target=/home/vscode/.sf,type=bind",
+    "source=${localEnv:HOME}/.sfdx,target=/home/vscode/.sfdx,type=bind",
+    "source=sf-develop-demo-history,target=/commandhistory,type=volume"
+  ],
+
+  // .sf/ is gitignored, so a fresh clone has no target-org. This committed
+  // alias is what makes the default survive cloning.
+  "containerEnv": {
+    "SF_DEFAULT_ORG_ALIAS": "github1"
+  },
+
   "customizations": {
     "vscode": {
       "extensions": [
-        "salesforce.salesforcedx-vscode-core",
-        "salesforce.salesforcedx-vscode-apex",
-        "salesforce.salesforcedx-vscode-apex-debugger",
-        "salesforce.salesforcedx-vscode-apex-replay-debugger",
-        "salesforce.salesforcedx-vscode-lightning",
-        "salesforce.salesforcedx-vscode-lwc",
-        "salesforce.salesforcedx-vscode-soql",
+        "salesforce.salesforcedx-vscode-expanded",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "redhat.vscode-xml",
@@ -19,17 +29,12 @@
       "settings": {
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.profiles.linux": {
-          "zsh": {
-            "path": "/bin/zsh"
-          }
+          "zsh": { "path": "/bin/zsh" }
         }
       }
     }
   },
+
   "remoteUser": "vscode",
-  "postCreateCommand": "npm install",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  }
+  "postCreateCommand": "npm install && .devcontainer/post-create.sh"
 }
