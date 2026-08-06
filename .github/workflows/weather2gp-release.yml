@@ -12,7 +12,15 @@
 # the validated pool is spent.
 #
 # Required secret: SFDX_AUTH_URL — Dev Hub (gabor_dev).
-#   sf org display --target-org gabor_dev --verbose --json | jq -r '.result.sfdxAuthUrl'
+#   sf org auth show-sfdx-auth-url --target-org gabor_dev --json | jq -rj '.result.sfdxAuthUrl'
+# `sf org display` no longer works for this: as of CLI 2.14x it redacts the field
+# to the literal string "[REDACTED] Use 'sf org auth show-sfdx-auth-url' to view",
+# which stores fine as a secret and fails at login with INVALID_SFDX_AUTH_URL.
+# Use `jq -rj`, not `-r` — a trailing newline in the secret is its own failure.
+#
+# Optional secret: SCRATCH_ORG_AUTH_URL — a long-lived scratch org to validate in
+# when dispatched with reuse-scratch-org: true, so debugging this flow does not
+# spend one scratch org per iteration.
 
 name: weather2GP Release
 
