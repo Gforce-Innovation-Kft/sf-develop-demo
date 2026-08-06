@@ -55,7 +55,8 @@
     "fflib-apex-common": "0HogL000000423FSAQ",
     "fflib-apex-mocks@0.1.0-1": "04tgL000000M0arQAC",
     "fflib-apex-common@0.1.0-1": "04tgL000000M0cTQAS",
-    "weather-app@0.1.0-1": "04tgL000000M26PQAS"
+    "weather-app@0.1.0-1": "04tgL000000M26PQAS",
+    "weather-app@0.1.0-2": "04tgL000000M3X7QAK"
   },
   "replacements": [
     {
