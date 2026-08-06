@@ -14,10 +14,14 @@
     "source=sf-develop-demo-history,target=/commandhistory,type=volume"
   ],
 
-  // .sf/ is gitignored, so a fresh clone has no target-org. This committed
-  // alias is what makes the default survive cloning.
+  // Fallback alias used by post-create.sh when the resolved target-org is not
+  // authorized in this container. That happens routinely: the workspace is
+  // bind-mounted, so a host-side /workspace/.sf/config.json reads as sf's
+  // *Local* config and outranks the volume's Global config — pointing at an
+  // org only the host can reach. Keep this a durable org (the Dev Hub), not a
+  // scratch org alias, so it does not rot when the scratch org expires.
   "containerEnv": {
-    "SF_DEFAULT_ORG_ALIAS": "github1"
+    "SF_DEFAULT_ORG_ALIAS": "gabor_dev"
   },
 
   "customizations": {

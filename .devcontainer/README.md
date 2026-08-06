@@ -81,22 +81,29 @@ container and vice versa.
 > and it's broken: `sf`'s stored auth tokens are encrypted with a key from the
 > host OS's keychain (e.g. macOS Keychain). A Linux container can't read that
 > keychain, so every org fails `sf org list` with `AuthDecryptError` — the
-> credentials are *present* but undecryptable. Named volumes sidestep this
+> credentials are _present_ but undecryptable. Named volumes sidestep this
 > entirely: the container creates and reads its own auth with its own key,
 > and it never has to cross the host/container boundary.
 
 - Log in from **inside the container**:
 
   ```bash
-  sf org login web --alias myorg --set-default
+  sf org login web --alias myorg
   ```
 
-  or non-interactively via an auth URL obtained on any machine already logged
-  in (`sf org display --target-org <alias> --verbose --json | jq -r .result.sfdxAuthUrl`):
+  or non-interactively via an auth URL. Recent `sf` releases **redact** the URL
+  from `sf org display --verbose`, so obtain it on an already-logged-in machine
+  with `sf org auth show-sfdx-auth-url -o <alias>`, then inside the container:
 
   ```bash
-  echo "$SF_AUTH_URL" | sf org login sfdx-url --sfdx-url-stdin --alias myorg --set-default
+  # paste the force://... URL into /tmp/u.txt, then:
+  sf org login sfdx-url --sfdx-url-file /tmp/u.txt --alias myorg && rm -f /tmp/u.txt
   ```
+
+  Omit `--set-default` in both cases. `post-create.sh` pins the verified alias
+  globally; `--set-default` from inside `/workspace` would instead write into
+  the bind-mounted `/workspace/.sf/config.json` and leak container state back
+  onto your host.
 
 - It survives `Rebuild Container` (the volume isn't touched by a rebuild) but
   **not** `Rebuild Container Without Cache` combined with removing the
@@ -111,14 +118,21 @@ access is now scoped to whichever container you explicitly authorize.
 
 Runs automatically at container creation (via `postCreateCommand`). It:
 
-1. Reads the current `target-org` from `sf config get target-org`. Since
-   `.sf/` is gitignored and a fresh volume starts empty, it falls back to the
-   `SF_DEFAULT_ORG_ALIAS` value set in `devcontainer.json`
-   (`containerEnv`) if no target-org is configured yet.
-2. Verifies the resolved org is actually authorized (`sf org display`). If
-   it isn't — expected on a brand-new volume — the script exits non-zero and
-   prints the exact `sf org login web --alias <org> --set-default` command
-   to run, **inside the container**.
+1. Reads the current `target-org` from `sf config get target-org`.
+2. **Verifies that org is actually authorized here** (`sf org display`) before
+   trusting it. This check matters more than it looks: the workspace is
+   bind-mounted, so a host-side `/workspace/.sf/config.json` is read by `sf` as
+   _Local_ config and **outranks** the Global config in the container's named
+   volume. Without the check, the script would resolve an alias that only your
+   host can reach and fail even though the container is correctly authorized.
+3. Falls back to `SF_DEFAULT_ORG_ALIAS` from `devcontainer.json`
+   (`containerEnv`) when the resolved org is missing or unauthorized. Keep that
+   a **durable** org — the Dev Hub, not a scratch org alias, which would rot as
+   soon as the scratch org expires.
+4. Pins the alias with `sf config set target-org --global` only once verified,
+   so it lands in the volume and never writes back into the host's `.sf/`.
+   If nothing is authorized, it exits non-zero and prints the exact login
+   command to run **inside the container**.
 
 If you see that failure, log in inside the container and re-run
 `.devcontainer/post-create.sh`, or reopen the container.
@@ -178,8 +192,8 @@ On the current `:latest` (v2.0.0), Powerlevel10k is still present.
   `sf org login web ...` command the script prints — run it **inside the
   container**, not on the host — then re-run `.devcontainer/post-create.sh`.
 - Getting `AuthDecryptError` instead of "NOT authorized"? That means a login
-  from a *different* environment (old host bind mount, a different machine)
-  ended up in this volume. Re-run `sf org login web --alias <org> --set-default`
+  from a _different_ environment (old host bind mount, a different machine)
+  ended up in this volume. Re-run `sf org login web --alias <org>`
   inside this container to overwrite it with a decryptable one.
 
 ## 📚 Additional Resources
