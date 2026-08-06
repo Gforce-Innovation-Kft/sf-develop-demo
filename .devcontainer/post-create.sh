@@ -11,7 +11,7 @@ set -euo pipefail
 SF_DIR="${HOME}/.sf"
 
 if [ ! -d "$SF_DIR" ]; then
-  echo "::error:: ${SF_DIR} is not mounted. Check the 'mounts' entry in devcontainer.json."
+  echo "Error: ${SF_DIR} is not mounted. Check the 'mounts' entry in devcontainer.json."
   exit 1
 fi
 
