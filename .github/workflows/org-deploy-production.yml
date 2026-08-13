@@ -1,0 +1,51 @@
+---
+# ==============================================================================
+# Production deployments.
+#
+# Triggered by a version tag, gated by the production environment's required
+# reviewer. Nothing reaches DEMO-PROD without a human approving it.
+#
+# The approval prompt fires on the DEPLOY job, not the build job. By the time
+# you are asked, the artifact exists and its component list is in the run
+# summary — approving a deployment whose contents are still unknown is not a
+# review.
+#
+# A v* tag means "release", so a tag push defaults to a real deploy. Manual runs
+# default to validate, because the reason to dispatch by hand is usually to
+# check something.
+# ==============================================================================
+name: Deploy — Production
+
+on:
+  push:
+    tags: ["v*"]
+
+  workflow_dispatch:
+    inputs:
+      deploy-mode:
+        description: "validate = check-only, nothing is committed. deploy = for real."
+        required: true
+        default: validate
+        type: choice
+        options: [validate, deploy]
+      mode:
+        description: "delta (since the last deploy) or full (everything)"
+        required: false
+        default: delta
+        type: choice
+        options: [delta, full]
+
+jobs:
+  deploy:
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/reusable-sf-org-deploy.yml@v2
+    permissions:
+      contents: write # only to move deployed/production
+    with:
+      environment: production
+      # A tag push carries no inputs, so it falls through to a real deploy.
+      deploy-mode: ${{ inputs.deploy-mode || 'deploy' }}
+      mode: ${{ inputs.mode || 'delta' }}
+      retention-days: 90
+    secrets:
+      sf-jwt-key-b64: ${{ secrets.SF_JWT_KEY_B64 }}
+      github-app-key-b64: ${{ secrets.GITHUB_APP_KEY_B64 }}

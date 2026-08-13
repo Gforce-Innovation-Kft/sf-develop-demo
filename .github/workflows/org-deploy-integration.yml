@@ -52,7 +52,9 @@ jobs:
       mode: ${{ inputs.mode }}
       retention-days: 90
     secrets:
-      # The private key is the only secret. Username, login url and consumer key
+      # Only real credentials are secrets. Username, login url and consumer key
       # are environment VARIABLES: inert without the key, and readable output is
       # what makes a failed login diagnosable instead of a wall of "***".
       sf-jwt-key-b64: ${{ secrets.SF_JWT_KEY_B64 }}
+      # Injected into Custom Metadata after the artifact deploys, never inside it.
+      github-app-key-b64: ${{ secrets.GITHUB_APP_KEY_B64 }}
