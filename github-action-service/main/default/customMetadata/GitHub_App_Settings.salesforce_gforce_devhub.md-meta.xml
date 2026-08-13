@@ -4,7 +4,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 >
-    <label>Github Gforce App</label>
+    <label>Github Gforce App (ENV_LABEL_PLACEHOLDER)</label>
     <protected>false</protected>
     <values>
         <field>App_Id__c</field>
