@@ -119,14 +119,18 @@ in this spec works until Phase 0 is complete and verified.
 Sign up at <https://developer.salesforce.com/signup>. Use plus-addressing so both orgs reach
 the same inbox:
 
-| Org                | Signup email                         | Purpose                           |
-| ------------------ | ------------------------------------ | --------------------------------- |
-| `DEMO-INTEGRATION` | `demetergabor94+demo-int@gmail.com`  | integration deployment target     |
-| `DEMO-PROD`        | `demetergabor94+demo-prod@gmail.com` | production-like deployment target |
+| Org                | Signup email                                   | Purpose                           |
+| ------------------ | ---------------------------------------------- | --------------------------------- |
+| `DEMO-INTEGRATION` | `gabor.demeter+demo-int@gforceinnovation.com`  | integration deployment target     |
+| `DEMO-PROD`        | `gabor.demeter+demo-prod@gforceinnovation.com` | production-like deployment target |
+
+Plus-addressing requires the mail provider behind `gforceinnovation.com` to support it (Google
+Workspace and Microsoft 365 both do). If a signup is rejected, fall back to distinct addresses
+or aliases — nothing downstream depends on the address shape.
 
 Record the resulting **username** for each (it is not the signup email — it looks like
-`demetergabor94+demo-int@gmail.com` only if you chose it, otherwise Salesforce generates one).
-Retrieve it from Setup → Users.
+`gabor.demeter+demo-int@gforceinnovation.com` only if you chose it, otherwise Salesforce
+generates one). Retrieve it from Setup → Users.
 
 The Dev Hub (`gabor_dev`) already exists. Verify Dev Hub is enabled:
 Setup → Dev Hub → _Enable Dev Hub_ is on.
