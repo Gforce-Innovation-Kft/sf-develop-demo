@@ -44,9 +44,6 @@ public class WeatherServiceImpl implements IWeatherService {
     return settings.Api_Key__c;
   }
 
-  public class WeatherServiceException extends Exception {
-  }
-
   /**
    * Get current weather data from OpenWeatherMap API
    */
