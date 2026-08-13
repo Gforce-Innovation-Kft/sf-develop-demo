@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Api_Key__c</fullName>
+    <label>API Key</label>
+    <description
+  >OpenWeatherMap API key. Injected per environment by the deployment pipeline (sf-env-config-apply) — never committed to source.</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText
+  >Set by CI from the OWM_API_KEY environment secret. Editing this by hand will be overwritten on the next deployment.</inlineHelpText>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

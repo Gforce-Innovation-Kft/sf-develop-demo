@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomMetadata
+  xmlns="http://soap.sforce.com/2006/04/metadata"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+>
+    <label>Default</label>
+    <protected>true</protected>
+    <values>
+        <field>Base_Url__c</field>
+        <value
+      xsi:type="xsd:string"
+    >https://api.openweathermap.org/data/2.5/weather</value>
+    </values>
+    <!--
+      Api_Key__c is deliberately empty in source. The pipeline overwrites it
+      immediately after this record deploys, from the OWM_API_KEY environment
+      secret — see config/secret-templates/. A key committed here would live in
+      the artifact and in git history forever.
+    -->
+    <values>
+        <field>Api_Key__c</field>
+        <value xsi:nil="true" />
+    </values>
+</CustomMetadata>
