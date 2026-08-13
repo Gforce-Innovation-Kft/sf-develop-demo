@@ -37,17 +37,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     container:
-      # The image is the source of tool versions, never the runner.
+      # Rules: sf-docker-images/docs/using-in-github-actions.md
       #
-      # NOT 1.7.0: that tag registers only uid 1000 (`ci`), and a GitHub-hosted
-      # container job must run as 1001 — the runner owns /github/home and the
-      # file-command dir. Running 1.7.0 as 1001 crashes every `sf` invocation
-      # with `uv_os_get_passwd returned ENOENT`, because oclif calls
-      # os.userInfo() and an unregistered uid has no passwd entry.
-      #
-      # `latest` registers `runner:1001`. Pinning to a digest is the goal;
-      # that lands when sf-ci 1.8.0 ships with the whole toolchain pinned.
-      image: gforceinnovation/sf-ci:latest
+      # Exact version, never `latest` — the image is the source of tool
+      # versions, and a floating tag gives up `git commit + image tag`
+      # reproducibility. 3.0.0 is current; 1.x and 2.0.0 ran as root and do
+      # not register uid 1001 at all.
+      image: gforceinnovation/sf-ci:3.0.0
+      # Required, not vestigial. The runner creates $GITHUB_OUTPUT /
+      # $GITHUB_ENV / $GITHUB_STEP_SUMMARY as -rw-r--r-- 1001:1001, so any
+      # other uid gets "Permission denied" the moment a step sets an output.
+      # v3.0.0 dropped `--user root`, not `--user`.
       options: --user 1001
     permissions:
       contents: read
