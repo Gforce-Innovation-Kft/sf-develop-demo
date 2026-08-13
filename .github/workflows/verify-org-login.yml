@@ -52,7 +52,7 @@ jobs:
       # key, and keeping them readable is what makes a failure diagnosable.
       - name: Log in to Salesforce
         id: login
-        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@feat/sf-org-login-github-env
+        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@v2
         with:
           auth-method: jwt
           credential-source: github-env
