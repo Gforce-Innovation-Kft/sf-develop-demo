@@ -239,14 +239,41 @@ For `integration` and `production` only, add the application secrets:
 
 #### 5.2.1 Project and billing
 
+**A Cloud Billing account is mandatory.** Per Google's Free Tier documentation, _"A Google
+Cloud billing account is required to access the Google Cloud Free Tier."_ Secret Manager and
+Cloud Storage cannot be used without one. There is no unbilled path.
+
+If no billing account exists yet, create one first at
+<https://console.cloud.google.com/billing> → _Create account_. This requires a card, but
+_"The authorization request is a hold, not an actual charge."_ Creating the account itself
+costs nothing. Then:
+
 ```bash
+gcloud billing accounts list            # → BILLING_ACCOUNT_ID
 gcloud projects create gforce-sf-devops --name="GForce SF DevOps"
 gcloud config set project gforce-sf-devops
 gcloud billing projects link gforce-sf-devops --billing-account=<BILLING_ACCOUNT_ID>
 ```
 
-A billing account must be attached even for Always Free usage. Attaching it does not incur
-charges while usage stays within the free allowances.
+**What this actually costs: nothing, permanently, at this project's footprint.**
+
+| Service                           | Always Free allowance                                         | This project's usage                           |
+| --------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |
+| Cloud Storage                     | 5 GB-months, **`us-central1` / `us-east1` / `us-west1` only** | ~6 objects and a few MB per deployment         |
+| Secret Manager                    | 6 active secret versions; 10,000 access operations/month      | 3 secrets × 1 version; ~2 reads per deployment |
+| Workload Identity Federation, IAM | no charge                                                     | —                                              |
+
+The bucket region in §8.3 is `US-CENTRAL1` specifically because the Always Free storage
+allowance does not apply outside those three regions.
+
+> **Plan for the 90-day cliff.** The Free Trial gives $300 of credit over 90 days. Google does
+> **not** auto-charge when it ends — the account _"enters a 30-day grace period"_, and if it is
+> not upgraded, _"resources are permanently deleted."_
+>
+> So: no surprise bill, but also no surviving demo unless you upgrade to a paid Cloud Billing
+> account before the grace period expires. After upgrading, Always Free continues to apply and
+> this project stays at zero cost — but usage **above** the allowances then bills for real.
+> That is what §5.2.3 (budget alert) and the quota override in §8.3 exist to catch.
 
 #### 5.2.2 Enable APIs
 
