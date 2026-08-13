@@ -1,26 +1,62 @@
 {
   "packageDirectories": [
     {
-      "path": "apex-mocks",
-      "default": false
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "path": "fflib-apex-mocks/sfdx-source/apex-mocks",
+      "default": false,
+      "package": "fflib-apex-mocks",
+      "versionDescription": "fflib ApexMocks (upstream apex-enterprise-patterns, pinned submodule)"
     },
     {
-      "path": "apex-common",
-      "default": false
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "path": "fflib-apex-common/sfdx-source/apex-common",
+      "default": false,
+      "package": "fflib-apex-common",
+      "versionDescription": "fflib Apex Common enterprise patterns (upstream apex-enterprise-patterns, pinned submodule)",
+      "dependencies": [
+        {
+          "package": "fflib-apex-mocks",
+          "versionNumber": "0.1.0.LATEST"
+        }
+      ]
     },
     {
       "path": "github-action-service",
       "default": true
     },
     {
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
       "path": "weather-app",
-      "default": false
+      "default": false,
+      "package": "weather-app",
+      "versionDescription": "Weather dashboard demo app built on fflib enterprise patterns",
+      "dependencies": [
+        {
+          "package": "fflib-apex-mocks",
+          "versionNumber": "0.1.0.LATEST"
+        },
+        {
+          "package": "fflib-apex-common",
+          "versionNumber": "0.1.0.LATEST"
+        }
+      ]
     }
   ],
   "name": "sf-develop-demo",
   "namespace": "",
   "sfdcLoginUrl": "https://orgfarm-b918987145-dev-ed.develop.my.salesforce.com",
   "sourceApiVersion": "65.0",
+  "packageAliases": {
+    "weather-app": "0HogL000000426TSAQ",
+    "fflib-apex-mocks": "0HogL000000421dSAA",
+    "fflib-apex-common": "0HogL000000423FSAQ",
+    "fflib-apex-mocks@0.1.0-1": "04tgL000000M0arQAC",
+    "fflib-apex-common@0.1.0-1": "04tgL000000M0cTQAS",
+    "weather-app@0.1.0-1": "04tgL000000M26PQAS"
+  },
   "replacements": [
     {
       "filename": "github-action-service/main/default/customMetadata/GitHub_App_Settings.salesforce_gforce_devhub.md-meta.xml",

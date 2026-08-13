@@ -1,4 +1,11 @@
 /**
+ * @description       : 
+ * @author            : Gabor Demeter
+ * @group             : 
+ * @last modified on  : 08-05-2026
+ * @last modified by  : Gabor Demeter
+**/
+/**
  * @description Abstract base class for GitHub repository dispatch events
  * Provides common structure and validation for all dispatch events
  */

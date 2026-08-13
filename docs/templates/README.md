@@ -18,4 +18,4 @@ These are copy-and-fill templates to speed up consistent Apex and LWC code. Repl
 
 ## Notes
 - Service and selector templates match the patterns used in `weather-app`.
-- Test template uses `fflib_ApexMocks` from `apex-mocks`.
+- Test template uses `fflib_ApexMocks` from the `fflib-apex-mocks` submodule.

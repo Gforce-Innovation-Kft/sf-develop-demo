@@ -1,10 +1,11 @@
 # Architecture Notes
 
 This repo follows Apex Enterprise Patterns from fflib (apex-common) and uses fflib_ApexMocks for tests (apex-mocks).
+Both fflib libraries are git submodules tracking `apex-enterprise-patterns` upstream, not vendored source.
 
 ## Package layout
-- apex-common: fflib core framework classes
-- apex-mocks: fflib_ApexMocks test utilities
+- fflib-apex-common/sfdx-source/apex-common: fflib core framework classes (submodule, read-only)
+- fflib-apex-mocks/sfdx-source/apex-mocks: fflib_ApexMocks test utilities (submodule, read-only)
 - github-action-service: GitHub integration package
 - weather-app: sample application using the patterns
 

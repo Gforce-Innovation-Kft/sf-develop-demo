@@ -1,0 +1,6 @@
+[submodule "fflib-apex-mocks"]
+	path = fflib-apex-mocks
+	url = https://github.com/apex-enterprise-patterns/fflib-apex-mocks.git
+[submodule "fflib-apex-common"]
+	path = fflib-apex-common
+	url = https://github.com/apex-enterprise-patterns/fflib-apex-common.git

@@ -1,0 +1,162 @@
+---
+# ==============================================================================
+# End-to-end verification that this repo can authenticate to its deployment
+# targets using the shared sf-org-login action.
+#
+# This is the first real L4 -> L1 consumer: a thin caller that owns no
+# Salesforce logic, only the choice of environment. Everything it does lives in
+# shared-github-actions.
+#
+# It lives here rather than in shared-github-actions because THIS is where the
+# credentials legitimately live. Copying a Salesforce private key into the
+# actions repo to test it there would double the rotation surface and prove
+# nothing extra — the input-contract cases are covered there, credential-free.
+#
+# Run it after rotating a key, after changing a Connected App, or before
+# trusting a deployment workflow for the first time.
+# ==============================================================================
+name: Verify Org Login
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Which org to verify"
+        required: true
+        default: integration
+        type: choice
+        options: [integration, production]
+
+concurrency:
+  group: verify-org-login-${{ inputs.environment }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Authenticate to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    container:
+      # The image is the source of tool versions, never the runner.
+      image: gforceinnovation/sf-ci:1.7.0
+      options: --user 1001
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # The private key is the only secret. Username, login url and consumer
+      # key are variables: in the JWT bearer flow they are inert without the
+      # key, and keeping them readable is what makes a failure diagnosable.
+      - name: Log in to Salesforce
+        id: login
+        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@v2
+        with:
+          auth-method: jwt
+          credential-source: github-env
+          jwt-key-b64: ${{ secrets.SF_JWT_KEY_B64 }}
+          username: ${{ vars.SF_USERNAME }}
+          client-id: ${{ vars.SF_CLIENT_ID }}
+          instance-url: ${{ vars.SF_INSTANCE_URL }}
+          org-alias: verify
+          fetch-access-token: "true"
+
+      - name: Assert the identity outputs
+        env:
+          ORG_ID: ${{ steps.login.outputs.org-id }}
+          USERNAME: ${{ steps.login.outputs.username }}
+          INSTANCE_URL: ${{ steps.login.outputs.instance-url }}
+          EXPECTED_USERNAME: ${{ vars.SF_USERNAME }}
+        run: |
+          set -euo pipefail
+
+          [ -n "$ORG_ID" ]   || { echo "::error::org-id output was empty"; exit 1; }
+          [ -n "$USERNAME" ] || { echo "::error::username output was empty"; exit 1; }
+
+          case "$ORG_ID" in
+            00D*) ;;
+            *) echo "::error::org-id '$ORG_ID' is not a Salesforce org id"; exit 1 ;;
+          esac
+
+          # Authenticating as the wrong user is a silent, dangerous success —
+          # a deployment would land in an org nobody expected.
+          [ "$USERNAME" = "$EXPECTED_USERNAME" ] \
+            || { echo "::error::authenticated as '$USERNAME' but the environment expects '$EXPECTED_USERNAME'"; exit 1; }
+
+          # instance-url must be the org's My Domain, not the login url we
+          # passed in, or downstream API calls go to the wrong host.
+          case "$INSTANCE_URL" in
+            *login.salesforce.com*|*test.salesforce.com*)
+              echo "::error::instance-url is the login url, not the org's My Domain"; exit 1 ;;
+          esac
+
+          echo "✅ $USERNAME  ($ORG_ID)  @  $INSTANCE_URL"
+
+      # Regression guard. Since CLI 2.145 `sf org display` returns a ~54-char
+      # "[REDACTED]" string for accessToken — not empty, so it looks real and
+      # yields an opaque 401 downstream. A genuine session id is <15-char org
+      # id>!<signature>.
+      - name: Assert access-token is a real session id
+        env:
+          ACCESS_TOKEN: ${{ steps.login.outputs.access-token }}
+          ORG_ID: ${{ steps.login.outputs.org-id }}
+        run: |
+          set -euo pipefail
+
+          [ -n "$ACCESS_TOKEN" ] || { echo "::error::access-token empty despite fetch-access-token: true"; exit 1; }
+
+          case "$ACCESS_TOKEN" in
+            *REDACTED*|*hidden*)
+              echo "::error::access-token is a redaction placeholder — the action regressed to reading 'sf org display'"
+              exit 1 ;;
+          esac
+
+          case "$ACCESS_TOKEN" in
+            "${ORG_ID:0:15}"'!'*) ;;
+            *) echo "::error::access-token is not shaped like a Salesforce session id"; exit 1 ;;
+          esac
+
+          echo "✅ access-token is a real session id (${#ACCESS_TOKEN} chars, value masked)"
+
+      # Proves the session actually works against the API, not just that a
+      # token-shaped string came back.
+      - name: Query the org through the authenticated session
+        run: |
+          set -euo pipefail
+          sf data query \
+            --query "SELECT Id, Name, OrganizationType, InstanceName FROM Organization LIMIT 1" \
+            --target-org verify \
+            --result-format human
+          echo "✅ the session is usable against the API"
+
+      - name: Assert no credential file survived
+        if: always()
+        run: |
+          set -euo pipefail
+          FOUND=0
+          for f in jwt-key.txt sfdx-auth-url.txt org-info.json token.json; do
+            [ -f "$f" ] && { echo "::error::$f was left on disk"; FOUND=1; }
+          done
+          [ "$FOUND" -eq 0 ] || exit 1
+          echo "✅ no credential files left behind"
+
+      - name: Summary
+        if: always()
+        env:
+          ORG_ID: ${{ steps.login.outputs.org-id }}
+          USERNAME: ${{ steps.login.outputs.username }}
+          INSTANCE_URL: ${{ steps.login.outputs.instance-url }}
+        run: |
+          {
+            echo "## Org login — ${{ inputs.environment }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Org ID | \`${ORG_ID:-n/a}\` |"
+            echo "| Username | \`${USERNAME:-n/a}\` |"
+            echo "| Instance | ${INSTANCE_URL:-n/a} |"
+            echo "| Auth | JWT bearer, credential-source \`github-env\` |"
+            echo "| Result | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

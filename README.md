@@ -33,8 +33,8 @@ Secure, bidirectional integration between Salesforce and GitHub Actions using Gi
 
 ```
 sf-develop-demo/
-├── apex-common/          # fflib enterprise patterns
-├── apex-mocks/           # Testing framework
+├── fflib-apex-common/    # fflib enterprise patterns (git submodule)
+├── fflib-apex-mocks/     # Testing framework (git submodule)
 ├── force-app/            # Core Salesforce metadata
 ├── github-action-service/ # GitHub integration package
 ├── weather-app/          # Sample application
@@ -167,8 +167,13 @@ sf apex get log --number 1
 
 ### Enterprise Libraries
 
-- **apex-common**: FinancialForce application framework
-- **apex-mocks**: Mocking framework for testing
+- **fflib-apex-common**: application framework — git submodule of
+  [apex-enterprise-patterns/fflib-apex-common](https://github.com/apex-enterprise-patterns/fflib-apex-common)
+- **fflib-apex-mocks**: mocking framework for testing — git submodule of
+  [apex-enterprise-patterns/fflib-apex-mocks](https://github.com/apex-enterprise-patterns/fflib-apex-mocks)
+
+Clone with `git clone --recurse-submodules`, or run `git submodule update --init --recursive`
+in an existing checkout — the Apex build will not compile without them.
 
 ## 🤝 Contributing
 
