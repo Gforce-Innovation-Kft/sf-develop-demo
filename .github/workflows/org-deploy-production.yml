@@ -50,3 +50,5 @@ jobs:
       sf-jwt-key-b64: ${{ secrets.SF_JWT_KEY_B64 }}
       # Repo-level: it is the same GitHub App for both orgs.
       github-app-key-b64: ${{ secrets.PRIVATE_KEY_GITHUB_BASE64 }}
+      # Rotate the leaked key, then: gh secret set OWM_API_KEY --env <env>
+      owm-api-key: ${{ secrets.OWM_API_KEY }}
