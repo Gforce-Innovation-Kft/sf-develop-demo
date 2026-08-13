@@ -1,0 +1,105 @@
+---
+# ==============================================================================
+# TEMPORARY EXPERIMENT — delete once docs/devops/container-usage-rules.md lands.
+#
+# Question: can a GitHub Actions container job use gforceinnovation/sf-ci
+# WITHOUT `options: --user 1001`?
+#
+# Local probing already settled half of it: the default user (ci, 1000) cannot
+# write /github/home, which the runner owns as 1001 — but overriding HOME to
+# /home/ci makes `sf` work again. What local probing CANNOT answer is whether
+# the runner's FILE COMMANDS ($GITHUB_OUTPUT / $GITHUB_ENV / $GITHUB_STEP_SUMMARY)
+# stay writable, because those files are created by the runner outside the image.
+#
+# Every step of every action we write appends to $GITHUB_OUTPUT, so if that
+# fails the whole approach is dead regardless of what `sf version` does.
+# ==============================================================================
+name: experiment-container-uid
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/experiment-container-uid.yml"
+
+jobs:
+  matrix:
+    name: ${{ matrix.variant.name }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - name: "A. no --user, runner HOME (the naive way)"
+            user: ""
+            home: ""
+          - name: "B. no --user, HOME=/home/ci"
+            user: ""
+            home: "/home/ci"
+          - name: "C. --user 1001 (what the README says)"
+            user: "--user 1001"
+            home: ""
+    container:
+      image: gforceinnovation/sf-ci:3.0.0
+      options: ${{ matrix.variant.user }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      HOME_OVERRIDE: ${{ matrix.variant.home }}
+    steps:
+      - name: Who am I, and what is HOME
+        id: whoami
+        continue-on-error: true
+        run: |
+          set +e
+          echo "uid=$(id -u) gid=$(id -g) user=$(id -un 2>/dev/null || echo '<no passwd entry>')"
+          echo "HOME=$HOME"
+          echo "GITHUB_OUTPUT=$GITHUB_OUTPUT"
+          ls -ln "$(dirname "$GITHUB_OUTPUT")" 2>/dev/null | head -3
+
+      # THE decisive test. Every action we write does this in every step.
+      - name: Can I write the runner file commands?
+        id: filecmd
+        continue-on-error: true
+        run: |
+          set +e
+          echo "probe=ok" >> "$GITHUB_OUTPUT";      echo "GITHUB_OUTPUT  write rc=$?"
+          echo "PROBE=ok"  >> "$GITHUB_ENV";        echo "GITHUB_ENV     write rc=$?"
+          echo "probe"     >> "$GITHUB_STEP_SUMMARY"; echo "STEP_SUMMARY write rc=$?"
+
+      - name: Can sf run?
+        id: sf
+        continue-on-error: true
+        run: |
+          set +e
+          [ -n "$HOME_OVERRIDE" ] && export HOME="$HOME_OVERRIDE"
+          echo "using HOME=$HOME"
+          sf version 2>&1 | head -3
+          echo "sf rc=$?"
+
+      - name: Can sf write its config (login would need this)?
+        id: sfconfig
+        continue-on-error: true
+        run: |
+          set +e
+          [ -n "$HOME_OVERRIDE" ] && export HOME="$HOME_OVERRIDE"
+          sf config list 2>&1 | head -3
+          echo "sf config rc=$?"
+          mkdir -p "$HOME/.sf" 2>&1 && touch "$HOME/.sf/probe" 2>&1
+          echo "mkdir \$HOME/.sf rc=$?"
+
+      - name: Verdict
+        if: always()
+        run: |
+          {
+            echo "### ${{ matrix.variant.name }}"
+            echo ""
+            echo "| check | outcome |"
+            echo "|---|---|"
+            echo "| identity | ${{ steps.whoami.outcome }} |"
+            echo "| file commands writable | ${{ steps.filecmd.outcome }} |"
+            echo "| sf runs | ${{ steps.sf.outcome }} |"
+            echo "| sf config writable | ${{ steps.sfconfig.outcome }} |"
+          } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
