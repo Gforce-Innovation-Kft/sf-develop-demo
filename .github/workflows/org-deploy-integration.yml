@@ -1,0 +1,58 @@
+---
+# ==============================================================================
+# Integration deployments.
+#
+# Thin by design: this file chooses a trigger, an environment and a mode.
+# Everything it actually does lives in shared-github-actions — no `sf` command
+# appears in this repository (ADR 0002: L4 orchestrates, L1/L2 implement).
+#
+# CURRENTLY MANUAL-ONLY AND VALIDATE-BY-DEFAULT.
+#
+# The `push: main` trigger is deliberately commented out until a real
+# deployment has been run and reviewed once by hand. An auto-deploying pipeline
+# that has never been observed deploying is not a pipeline, it is a liability.
+# Uncomment the trigger when you are ready for pushes to reach the org.
+# ==============================================================================
+name: Deploy — Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy-mode:
+        description: "validate = check-only, nothing is committed. deploy = for real."
+        required: true
+        default: validate
+        type: choice
+        options: [validate, deploy]
+      mode:
+        description: "delta (since the last deploy) or full (everything)"
+        required: false
+        default: delta
+        type: choice
+        options: [delta, full]
+
+  # Enable once a real deployment has been run and reviewed by hand:
+  #
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'weather-app/**'
+  #     - 'github-action-service/**'
+  #     - 'config/environments/**'
+  #     - 'sfdx-project.json'
+
+jobs:
+  deploy:
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/reusable-sf-org-deploy.yml@v2
+    permissions:
+      contents: write # only to move the deployed/integration marker
+    with:
+      environment: integration
+      deploy-mode: ${{ inputs.deploy-mode }}
+      mode: ${{ inputs.mode }}
+      retention-days: 90
+    secrets:
+      # The private key is the only secret. Username, login url and consumer key
+      # are environment VARIABLES: inert without the key, and readable output is
+      # what makes a failed login diagnosable instead of a wall of "***".
+      sf-jwt-key-b64: ${{ secrets.SF_JWT_KEY_B64 }}

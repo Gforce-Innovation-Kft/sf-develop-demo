@@ -63,3 +63,5 @@ target/
 **/tsconfig*.json
 **/*.tsbuildinfo
 **/graphql.config.yml
+# Local JWT login helper — holds real usernames and consumer keys
+test.sh
