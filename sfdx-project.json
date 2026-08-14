@@ -61,8 +61,8 @@
   "replacements": [
     {
       "filename": "github-action-service/main/default/customMetadata/GitHub_App_Settings.salesforce_gforce_devhub.md-meta.xml",
-      "stringToReplace": "GITHUB_PRIVATE_KEY_BASE64_PLACEHOLDER",
-      "replaceWithEnv": "GITHUB_PRIVATE_KEY_BASE64"
+      "stringToReplace": "ENV_LABEL_PLACEHOLDER",
+      "replaceWithEnv": "SF_ENV_LABEL"
     }
   ]
 }
