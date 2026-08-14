@@ -62,7 +62,7 @@ cd ~/gforce/sf-develop-demo    # NOT the template repo
 claude
 ```
 
-Ask: _"add a selector for Contact following our standards"_.
+Ask: *"add a selector for Contact following our standards"*.
 
 - ✅ `salesforce-developer` fires, and the generated selector has a `DataAccess.USER_MODE`
   constructor and API version **65.0** (that repo's `sourceApiVersion`), not 67.0.
@@ -117,6 +117,7 @@ npm run investigate -- fixtures/apex-test-failure
 ## Separately worth knowing
 
 `sf-develop-demo/weather-app/main/default/classes/WeatherReportsSelector.cls` has **no
-`DataAccess` constructor**, so it currently runs in system mode with no FLS, CRUD or sharing
-enforcement. It is demo code, not in scope here, but it is a real instance of the defect the old
-documentation caused — worth fixing when you are next in that repo.
+`DataAccess` constructor**, so it currently runs with FLS unenforced and `DataAccess.LEGACY`
+(CRUD enforcement and the `with sharing` parent class still apply). It is demo code, not in
+scope here, but it is a real instance of the defect the old documentation caused — worth
+fixing when you are next in that repo.

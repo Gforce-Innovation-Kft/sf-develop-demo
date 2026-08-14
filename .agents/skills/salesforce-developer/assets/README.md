@@ -4,13 +4,13 @@ Read the file matching the layer you are about to write, then adapt it. These ex
 code follows the GForce shape rather than the generic shape `platform-apex-generate` would
 otherwise produce.
 
-| File                      | Layer             | The thing it exists to demonstrate                                                |
-| ------------------------- | ----------------- | --------------------------------------------------------------------------------- |
-| `AccountsSelector.cls`    | Selector          | the `DataAccess.USER_MODE` constructor — **fflib enforces nothing without it**    |
-| `IAccountsService.cls`    | Service interface | the mock seam that makes the service testable                                     |
-| `AccountsServiceImpl.cls` | Service           | guard clause, query before the loop, one `commitWork()`, `Logger.*`               |
-| `Accounts.cls`            | Domain            | `onApplyDefaults` / `onValidate`, `addError` on the record not a thrown exception |
-| `AccountsServiceTest.cls` | Test              | positive + 200-record bulk + negative, asserting **one** commit                   |
+| File | Layer | The thing it exists to demonstrate |
+|---|---|---|
+| `AccountsSelector.cls` | Selector | the `DataAccess.USER_MODE` constructor — **fflib enforces no FLS without it** |
+| `IAccountsService.cls` | Service interface | the mock seam that makes the service testable |
+| `AccountsServiceImpl.cls` | Service | guard clause, query before the loop, one `commitWork()`, `Logger.*` |
+| `Accounts.cls` | Domain | `onApplyDefaults` / `onValidate`, `addError` on the record not a thrown exception |
+| `AccountsServiceTest.cls` | Test | positive + 200-record bulk + negative, asserting **one** commit |
 
 ## Registration
 

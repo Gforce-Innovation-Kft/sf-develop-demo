@@ -110,6 +110,6 @@ GitHub Actions workflow `feature-validation.yml` runs on PRs to `main`:
 - `salesforce-developer` — from Gforce-Innovation-Kft/gforce-ai (L2, house Apex/LWC standards;
   overridden by [`.claude/references/local-standards.md`](.claude/references/local-standards.md))
 
-**Global tooling available in every session:** lean-ctx (prefer `ctx_*` MCP tools for reads/search/shell — token-compressed), superpowers process skills, and graphify (no graph built for this repo).
+**Global tooling available in every session:** rtk (Bash output compression — automatic via hook), lean-ctx (prefer `ctx_*` MCP tools for reads/search — token-compressed), and superpowers process skills.
 
 <!-- /skills-tooling -->

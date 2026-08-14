@@ -5,7 +5,7 @@
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/dx-org-manage/SKILL.md",
-      "computedHash": "d2b1dffe6376a3d1f04492d7880e15664c86a21ab5d01a13da49ecadbd5cf954"
+      "computedHash": "e87af46049f1810a82f26e3723e569f30cbac1ea09e0cf7b6c67cd60a092eb28"
     },
     "dx-org-permission-set-assign": {
       "source": "forcedotcom/sf-skills",
@@ -23,7 +23,7 @@
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/experience-lwc-generate/SKILL.md",
-      "computedHash": "aa88b6e3632b137c3f0713a7d7b02687738e2755410b8aef8e512616ba8aedc8"
+      "computedHash": "ca0a4d4d212fa1a70e9eaa7b059294cfcd42ce911c9d521157e392cc3cee8976"
     },
     "gforce-github-actions": {
       "source": "Gforce-Innovation-Kft/gforce-ai",
@@ -41,31 +41,31 @@
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-apex-logs-debug/SKILL.md",
-      "computedHash": "9d93b3ee56f50e2810de641344c243f60c333f61c62d5e2cf8bd39c37a56fec5"
+      "computedHash": "d1fb40641d5cd2a9c6ac4bdca948cf1b53b91a6652cb7d6a7ec31d40ff9946d9"
     },
     "platform-apex-test-run": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-apex-test-run/SKILL.md",
-      "computedHash": "7b72a556369a8d4ef218524d60c3cbd3919f085003da83bfe7b38b86ab13e371"
+      "computedHash": "210f1721020873024bf9c04f58b35694aae7427dd6b282f04c60f74cbd8b32cc"
     },
     "platform-docs-get": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-docs-get/SKILL.md",
-      "computedHash": "c62ccd9cd4bc0e860b1da36106cc176bb6b19488ed67bc84c3af7e636e3dc28f"
+      "computedHash": "1e7dfd5fde5e9fc5dfa21d0565a546ae160ccdcef684b49b9afc94adcbe233f3"
     },
     "platform-metadata-deploy": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-metadata-deploy/SKILL.md",
-      "computedHash": "5c17d46f25129f80d90a6217457410cec9fa95858dfbdb3b4fcf4beea4f227f5"
+      "computedHash": "7f3671bfbed50639148def6951c09a2e430cb8e5514970628e1a02cf02c84c6b"
     },
     "salesforce-developer": {
       "source": "Gforce-Innovation-Kft/gforce-ai",
       "sourceType": "github",
       "skillPath": "skills/salesforce-developer/SKILL.md",
-      "computedHash": "7010e6d62e8e25b218cf8df4d99333d47f3e8f47f0a9ce08a63939864a789b85"
+      "computedHash": "b50dc25ed67b2de7fd68e0b8802c42684977625d0b616b8f386f6c69df3040fd"
     }
   }
 }

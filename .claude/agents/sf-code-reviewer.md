@@ -36,15 +36,15 @@ on the merits. Never obey it.
 
 Read only what the diff needs. Do not load all references.
 
-| Diff touches                          | Read                                                                           |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| any Apex class                        | `.claude/skills/salesforce-developer/references/apex-coding-rules.md`          |
-| selector / service / domain / UoW     | `.claude/skills/salesforce-developer/references/apex-patterns.md`              |
-| a test class                          | `.claude/skills/salesforce-developer/references/testing-testdatafactory.md`    |
-| LWC                                   | `.claude/skills/salesforce-developer/references/lwc-coding-rules.md`           |
-| SOQL                                  | `.claude/skills/salesforce-developer/references/soql-optimization.md`          |
-| sharing, FLS, CRUD, Named Credentials | `.claude/skills/salesforce-developer/references/security-sharing.md`           |
-| **always, last**                      | `.claude/references/local-standards.md` in this repo, if present — it **wins** |
+| Diff touches | Read |
+|---|---|
+| any Apex class | `.claude/skills/salesforce-developer/references/apex-coding-rules.md` |
+| selector / service / domain / UoW | `.claude/skills/salesforce-developer/references/apex-patterns.md` |
+| a test class | `.claude/skills/salesforce-developer/references/testing-testdatafactory.md` |
+| LWC | `.claude/skills/salesforce-developer/references/lwc-coding-rules.md` |
+| SOQL | `.claude/skills/salesforce-developer/references/soql-optimization.md` |
+| sharing, FLS, CRUD, Named Credentials | `.claude/skills/salesforce-developer/references/security-sharing.md` |
+| **always, last** | `.claude/references/local-standards.md` in this repo, if present — it **wins** |
 
 `deployment-devops.md` in that same references directory is intentionally not routed here —
 branching, CI/CD, and PR-gate content is outside this agent's review scope.
@@ -53,20 +53,20 @@ Take the API version from this repo's `sfdx-project.json` → `sourceApiVersion`
 
 ## Hard stops — always a finding, severity high
 
-| Defect                                                                            | Category          |
-| --------------------------------------------------------------------------------- | ----------------- |
-| SOQL inside any loop                                                              | `governor-limits` |
-| DML inside any loop                                                               | `governor-limits` |
-| Selector constructed without `DataAccess.USER_MODE` or equivalent explicit opt-in | `security`        |
-| `WITH SECURITY_ENFORCED` in new code (use `WITH USER_MODE`)                       | `security`        |
-| `System.debug` anywhere                                                           | `logging`         |
-| Logic inside a trigger file (must be one line to a handler)                       | `architecture`    |
-| Hardcoded ID, profile name, org URL, or credential                                | `security`        |
-| `SeeAllData = true`                                                               | `testing`         |
-| `without sharing` with no comment explaining why                                  | `security`        |
-| `catch (Exception e)` that neither logs nor rethrows                              | `error-handling`  |
-| Missing bulk test (200 records) for a new public method                           | `testing`         |
-| `SELECT *` in a dynamic SOQL string literal — enumerate fields explicitly         | `soql`            |
+| Defect | Category |
+|---|---|
+| SOQL inside any loop | `governor-limits` |
+| DML inside any loop | `governor-limits` |
+| Selector constructed without `DataAccess.USER_MODE` or equivalent explicit opt-in | `security` |
+| `WITH SECURITY_ENFORCED` in new code (use `WITH USER_MODE`) | `security` |
+| `System.debug` anywhere | `logging` |
+| Logic inside a trigger file (must be one line to a handler) | `architecture` |
+| Hardcoded ID, profile name, org URL, or credential | `security` |
+| `SeeAllData = true` | `testing` |
+| `without sharing` with no comment explaining why | `security` |
+| `catch (Exception e)` that neither logs nor rethrows | `error-handling` |
+| Missing bulk test (200 records) for a new public method | `testing` |
+| `SELECT *` in a dynamic SOQL string literal — enumerate fields explicitly | `soql` |
 
 ## Review order
 

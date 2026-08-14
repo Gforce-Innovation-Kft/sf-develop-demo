@@ -9,3 +9,9 @@
 .vscode
 
 coverage/
+
+# AI layer — upstream artifacts, must stay byte-identical to their source.
+# Reformatting them forks the skill from canonical and invalidates skills-lock.json,
+# which permanently breaks `npx skills update` for this repo.
+.agents/
+.claude/

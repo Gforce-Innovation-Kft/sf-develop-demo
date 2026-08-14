@@ -31,17 +31,17 @@ Do NOT skip. The reference files contain authoritative patterns with code exampl
 Paths below are **relative to this skill directory**, so they resolve wherever the skill is
 loaded from. `references/` ships as real files inside this skill.
 
-| What you're building                                                  | Read first                                                                    |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Any Apex class                                                        | `references/apex-coding-rules.md`                                             |
-| fflib layer (domain / selector / service / UoW / application factory) | `references/apex-patterns.md`                                                 |
-| Any test class                                                        | `references/testing-testdatafactory.md`                                       |
-| Any LWC component                                                     | `references/lwc-coding-rules.md`                                              |
-| SOQL queries or selector methods                                      | `references/soql-optimization.md`                                             |
-| Sharing model, FLS, CRUD, Named Credentials                           | `references/security-sharing.md`                                              |
-| Branching, CI/CD pipeline, deploy strategy                            | `references/deployment-devops.md`                                             |
-| Any Logger.\* usage                                                   | invoke skill `using-nebula-logger`                                            |
-| **Always, last**                                                      | `.claude/references/local-standards.md` **in the current repo, if it exists** |
+| What you're building | Read first |
+|---|---|
+| Any Apex class | `references/apex-coding-rules.md` |
+| fflib layer (domain / selector / service / UoW / application factory) | `references/apex-patterns.md` |
+| Any test class | `references/testing-testdatafactory.md` |
+| Any LWC component | `references/lwc-coding-rules.md` |
+| SOQL queries or selector methods | `references/soql-optimization.md` |
+| Sharing model, FLS, CRUD, Named Credentials | `references/security-sharing.md` |
+| Branching, CI/CD pipeline, deploy strategy | `references/deployment-devops.md` |
+| Any Logger.* usage | invoke skill `using-nebula-logger` |
+| **Always, last** | `.claude/references/local-standards.md` **in the current repo, if it exists** |
 
 **L3 override.** If the current repo has `.claude/references/local-standards.md`, read it **last**
 and treat it as authoritative: it is repo-specific and **wins** on any conflict with the rules in
@@ -50,13 +50,13 @@ customize it — that breaks `npx skills update` and drifts silently.
 
 And read the matching template in `assets/` before authoring:
 
-| Building                     | Template                                                         |
-| ---------------------------- | ---------------------------------------------------------------- |
-| Selector                     | `assets/AccountsSelector.cls`                                    |
-| Service                      | `assets/IAccountsService.cls` + `assets/AccountsServiceImpl.cls` |
-| Domain                       | `assets/Accounts.cls`                                            |
-| Test                         | `assets/AccountsServiceTest.cls`                                 |
-| Application.cls registration | `assets/README.md`                                               |
+| Building | Template |
+|---|---|
+| Selector | `assets/AccountsSelector.cls` |
+| Service | `assets/IAccountsService.cls` + `assets/AccountsServiceImpl.cls` |
+| Domain | `assets/Accounts.cls` |
+| Test | `assets/AccountsServiceTest.cls` |
+| Application.cls registration | `assets/README.md` |
 
 ---
 
@@ -81,8 +81,9 @@ Before writing a line, confirm:
 - [ ] DML lives only in Unit of Work (`uow.commitWork()`) — never direct `insert`/`update`/`delete`
 - [ ] `with sharing` is the default — `without sharing` requires an explicit comment explaining why
 - [ ] Does `Application.cls` need updating? (register new SObjects in Service, Selector, Domain, UoW maps)
-- [ ] Every new Selector's constructor passes `DataAccess.USER_MODE` — **fflib enforces nothing
-      by default**, so a selector without it silently runs in system mode
+- [ ] Every new Selector's constructor passes `DataAccess.USER_MODE` — **fflib does not enforce
+      FLS by default**, so a selector without it silently runs with FLS unenforced (CRUD is
+      still checked, and `with sharing` still applies)
 
 ## Step 2a — Templates and API version
 
@@ -99,13 +100,13 @@ Before writing a line, confirm:
 
 Before finalising any method, check each:
 
-| Check                                    | If yes                                                                    |
-| ---------------------------------------- | ------------------------------------------------------------------------- |
-| SOQL inside a loop?                      | Stop. Move query to Selector, call before loop, build a Map               |
-| DML inside a loop?                       | Stop. Use `uow.registerDirty/registerNew`, call `commitWork()` after loop |
-| Unconstrained query without LIMIT?       | Add LIMIT or use Batch for >10K rows                                      |
-| Nested loop over large collections?      | Refactor to `Map<Id, SObject>` for O(1) lookup                            |
-| Multiple queries that could be combined? | Consolidate into one Selector method                                      |
+| Check | If yes |
+|---|---|
+| SOQL inside a loop? | Stop. Move query to Selector, call before loop, build a Map |
+| DML inside a loop? | Stop. Use `uow.registerDirty/registerNew`, call `commitWork()` after loop |
+| Unconstrained query without LIMIT? | Add LIMIT or use Batch for >10K rows |
+| Nested loop over large collections? | Refactor to `Map<Id, SObject>` for O(1) lookup |
+| Multiple queries that could be combined? | Consolidate into one Selector method |
 
 ---
 
@@ -155,13 +156,13 @@ Every generated method must handle:
 
 ## Related skills
 
-| Task                 | Skill                         |
-| -------------------- | ----------------------------- |
-| Generate Apex class  | `platform-apex-generate`      |
-| Generate test class  | `platform-apex-test-generate` |
-| Generate LWC         | `experience-lwc-generate`     |
-| Run Apex tests       | `platform-apex-test-run`      |
-| SOQL query help      | `platform-soql-query`         |
-| NebulaLogger details | `using-nebula-logger`         |
-| Debug Apex logs      | `platform-apex-logs-debug`    |
-| Deploy metadata      | `platform-metadata-deploy`    |
+| Task | Skill |
+|---|---|
+| Generate Apex class | `platform-apex-generate` |
+| Generate test class | `platform-apex-test-generate` |
+| Generate LWC | `experience-lwc-generate` |
+| Run Apex tests | `platform-apex-test-run` |
+| SOQL query help | `platform-soql-query` |
+| NebulaLogger details | `using-nebula-logger` |
+| Debug Apex logs | `platform-apex-logs-debug` |
+| Deploy metadata | `platform-metadata-deploy` |

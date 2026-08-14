@@ -169,11 +169,12 @@ public with sharing class AccountServiceImpl implements IAccountService {
 
 **Every SOQL query must have `WITH USER_MODE` or use `Security.stripInaccessible`.**
 
-> **fflib does NOT enforce this by default.** `fflib_SObjectSelector` defaults to
-> `DataAccess.LEGACY` and `fflib_QueryFactory` to `FLSEnforcement.NONE`, which emit no
-> security clause at all. Every selector must opt in via its constructor —
-> `super(..., DataAccess.USER_MODE)`. A selector that does not is silently running in
-> system mode. Verified against `libs/fflib-apex-common` in this repo.
+> **fflib does NOT enforce FLS by default.** `fflib_SObjectSelector` defaults to
+> `DataAccess.LEGACY` and `fflib_QueryFactory` to `FLSEnforcement.NONE`, which emits no
+> FLS clause on the query. Every selector must opt in via its constructor —
+> `super(..., DataAccess.USER_MODE)`. A selector that does not silently runs with FLS
+> unenforced — CRUD is still checked by default (`m_enforceCRUD = true`), and the
+> `with sharing` parent class still applies. Verified against `libs/fflib-apex-common` in this repo.
 
 ```apex
 // Via fflib selector (preferred) — the selector must be constructed with DataAccess.USER_MODE

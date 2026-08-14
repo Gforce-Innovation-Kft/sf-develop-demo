@@ -19,16 +19,16 @@ tags: [github-actions, cicd, gforce, workflows]
 Detail lives in `Gforce-Innovation-Kft/shared-github-actions`. Read the matching entry before
 changing anything; the `action.yml` is the contract, the doc carries the rationale.
 
-| Task                                        | Read                                                                      |
-| ------------------------------------------- | ------------------------------------------------------------------------- |
-| Changing any existing action or workflow    | `docs/claude-actions-reference.md` (that asset's entry)                   |
-| Understanding how the pipeline composes     | `docs/pipeline-map.md`                                                    |
-| Writing or editing a TypeScript action      | `docs/typescript-action-authoring.md` + `docs/architecture.md`            |
-| Naming a new action or workflow             | `docs/adr/0002-naming-and-repo-structure.md`                              |
-| Renaming/removing an input, output, or file | `docs/usage-catalog.md` — **mandatory, see Step 2**                       |
-| Consuming the SF pipeline from another repo | `docs/consuming-sf-cicd.md`                                               |
-| Cutting a release                           | `CONTRIBUTING.md`                                                         |
-| **Always, last**                            | `.claude/references/local-standards.md` in the current repo, if it exists |
+| Task | Read |
+|---|---|
+| Changing any existing action or workflow | `docs/claude-actions-reference.md` (that asset's entry) |
+| Understanding how the pipeline composes | `docs/pipeline-map.md` |
+| Writing or editing a TypeScript action | `docs/typescript-action-authoring.md` + `docs/architecture.md` |
+| Naming a new action or workflow | `docs/adr/0002-naming-and-repo-structure.md` |
+| Renaming/removing an input, output, or file | `docs/usage-catalog.md` — **mandatory, see Step 2** |
+| Consuming the SF pipeline from another repo | `docs/consuming-sf-cicd.md` |
+| Cutting a release | `CONTRIBUTING.md` |
+| **Always, last** | `.claude/references/local-standards.md` in the current repo, if it exists |
 
 **L3 override.** A repo's `local-standards.md` is read last and **wins** on conflict. Never copy
 this skill into a repo to customize it.
@@ -68,12 +68,12 @@ Before renaming or removing an input, output, or file, or changing a default:
 
 ## Step 4 — Layer discipline (L1–L4)
 
-| Layer | Lives in                       | Contract                                                                |
-| ----- | ------------------------------ | ----------------------------------------------------------------------- |
-| L1    | `.github/actions/<name>/`      | **One** operation. No routing, no context.                              |
-| L2    | `reusable-sf-*.yml`            | Composes L1 into a pipeline. Typed inputs/outputs, explicit `secrets:`. |
-| L3    | `reusable-sf-ops-dispatch.yml` | Single external entry point. Validates, routes, reports.                |
-| L4    | consumer repos                 | Thin `uses:` callers.                                                   |
+| Layer | Lives in | Contract |
+|---|---|---|
+| L1 | `.github/actions/<name>/` | **One** operation. No routing, no context. |
+| L2 | `reusable-sf-*.yml` | Composes L1 into a pipeline. Typed inputs/outputs, explicit `secrets:`. |
+| L3 | `reusable-sf-ops-dispatch.yml` | Single external entry point. Validates, routes, reports. |
+| L4 | consumer repos | Thin `uses:` callers. |
 
 L1 never calls L1. L3 inlines no Salesforce logic. No pass-through layers. Nesting caps at 4.
 
