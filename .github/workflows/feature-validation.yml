@@ -34,7 +34,12 @@ on:
 
   # Trigger on PR events (only when opened or reopened)
   pull_request:
-    types: [opened, reopened]
+    # `synchronize` matters as much as the other two: without it a PR is
+    # validated when it opens and never again, so anything pushed afterwards
+    # reaches main having passed nothing. The cost is one scratch org per push
+    # to an open PR — check Dev Hub headroom (`sf limits api display`) before
+    # putting a long-running branch through review.
+    types: [opened, reopened, synchronize]
     branches: [main]
     paths:
       - "weather-app/**"
