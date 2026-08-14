@@ -1,0 +1,20 @@
+name: Test Shared Workflow
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/salesforce-analyzer
+
+jobs:
+  test-shared:
+    uses: gforceinnovation/shared-github-actions/.github/workflows/test-simple.yml@main
+    with:
+      message: "Testing shared workflow permissions!"
+
+  display-result:
+    needs: test-shared
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show result
+        run: |
+          echo "Result from shared workflow: ${{ needs.test-shared.outputs.result }}"
