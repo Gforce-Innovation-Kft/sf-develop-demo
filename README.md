@@ -26,7 +26,7 @@ Secure, bidirectional integration between Salesforce and GitHub Actions using Gi
 
 - **DevContainer Support**: Fully configured development environment with Docker
 - **CI/CD Pipelines**: GitHub Actions workflows for automated testing and deployment
-- **Feature Branch Validation**: Automated scratch org creation and validation on PRs
+- **CI**: PR gate — static analysis, then validation in a throwaway scratch org, both delegated to `shared-github-actions`
 - **Code Quality Checks**: ESLint and Prettier integration
 
 ## 📁 Project Structure

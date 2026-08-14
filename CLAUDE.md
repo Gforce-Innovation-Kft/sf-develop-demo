@@ -114,10 +114,21 @@ Version builds draw on a **6/day Dev Hub limit**; dependencies install in a fixe
 
 ## CI/CD
 
-GitHub Actions workflow `feature-validation.yml` runs on PRs to `main`:
+`ci.yml` is the PR gate on `main`. It is two `uses:` and nothing else:
 
-1. **Code quality job**: ESLint + Prettier checks
-2. **Validate feature job**: creates scratch org, deploys all source, assigns `Weather_Dashboard_Demo_Access` permset, runs Apex tests, validates metadata, then deletes the scratch org
+1. **Static analysis** — `reusable-sf-code-analyze.yml@v2` over `weather-app` and `github-action-service`
+2. **Scratch org validation** — `reusable-sf-pr-validate.yml@v2`, in `gforceinnovation/sf-ci:3.0.0` as UID 1001
+
+Ordered by cost: analysis needs no org, so a tree that fails it spends none of
+the Dev Hub's 3 concurrent scratch orgs.
+
+**No pipeline logic belongs in this repo.** `ci.yml` replaced
+`feature-validation.yml`, which inlined the whole thing — installing the SF CLI
+onto `ubuntu-latest`, hand-rolling a JWT login, duplicating what shared actions
+own. It was retired carrying three independent defects that a thin caller cannot
+have: a pinned Node 18 that could not parse the current SF CLI, a My Domain URL
+passed as the JWT audience, and no `permissions` block, so the step reporting
+failures could not report them.
 
 <!-- skills-tooling -->
 
