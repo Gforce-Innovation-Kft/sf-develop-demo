@@ -101,20 +101,23 @@ jobs:
           npm install -g @salesforce/cli
           sf version
 
-      - name: 🔑 Create JWT Key File
-        run: |
-          echo "${{ secrets.DEVHUB_JWT_KEY }}" > jwt-key.txt
-          chmod 600 jwt-key.txt
-
-      - name: 🏢 Authenticate to Dev Hub (JWT)
-        run: |
-          sf org login jwt \
-            --username "${{ vars.DEVHUB_USERNAME }}" \
-            --jwt-key-file jwt-key.txt \
-            --client-id "${{ vars.DEVHUB_CLIENT_ID }}" \
-            --alias ${{ env.DEV_HUB_ALIAS }} \
-            --set-default-dev-hub \
-            --instance-url "${{ vars.DEVHUB_INSTANCE_URL }}"
+      # Was a hand-rolled `sf org login jwt` writing its own key file. It passed
+      # vars.DEVHUB_INSTANCE_URL — a *.my.salesforce.com My Domain URL — as the
+      # JWT audience, which must be the LOGIN url. That is precisely the mistake
+      # `sf-org-login` exists to catch, and hand-rolling it meant the failure
+      # arrived as "SyntaxError: Invalid regular expression flags" instead of a
+      # sentence naming the problem.
+      #
+      # auth-url rather than jwt: SFDX_AUTH_URL is already the Dev Hub credential
+      # the weather2GP release flow authenticates with, so this repo carries one
+      # Dev Hub secret instead of four (key + username + client id + instance url).
+      - name: 🏢 Authenticate to Dev Hub
+        uses: Gforce-Innovation-Kft/shared-github-actions/.github/actions/sf-org-login@v2
+        with:
+          auth-method: auth-url
+          sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
+          org-alias: ${{ env.DEV_HUB_ALIAS }}
+          set-default-dev-hub: "true"
 
       - name: 🧪 Create Scratch Org
         run: |
