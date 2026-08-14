@@ -57,6 +57,14 @@ env:
   RUN_TESTS: ${{ github.event.inputs.run_tests != 'false' }}
   DEPLOY_ONLY: ${{ github.event.inputs.deploy_only == 'true' }}
 
+# The "Comment on PR" steps post the result back with actions/github-script.
+# Without pull-requests: write they fail with "Resource not accessible by
+# integration" — and because that failure lands in the reporting step, it
+# replaces the real error in the run's summary with a GitHub API stack trace.
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   validate-feature:
     name: Validate Feature Branch
@@ -90,15 +98,24 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
           cache: "npm"
 
       - name: 🛠️ Install Dependencies
         run: npm ci
 
+      # Pinned to the v2 line, matching what sf-ci installs. Unpinned, this job
+      # takes whatever npm published today onto whatever Node is configured
+      # above — the pairing that broke it (Node 18 + a CLI compiled with the
+      # ES2024 regex `v` flag) was exactly that drift.
+      #
+      # The real fix is to run this job in `gforceinnovation/sf-ci`, where the
+      # Node/CLI/Java combination is pinned and covered by 27 tests, the way
+      # weather2gp-release.yml already does. Left as a follow-up because it
+      # reshapes the job.
       - name: 🔧 Install Salesforce CLI
         run: |
-          npm install -g @salesforce/cli
+          npm install -g @salesforce/cli@2.*
           sf version
 
       # Was a hand-rolled `sf org login jwt` writing its own key file. It passed
@@ -287,7 +304,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
           cache: "npm"
 
       - name: 🛠️ Install Dependencies
