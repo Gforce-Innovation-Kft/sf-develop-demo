@@ -25,6 +25,12 @@
       "skillPath": "skills/experience-lwc-generate/SKILL.md",
       "computedHash": "aa88b6e3632b137c3f0713a7d7b02687738e2755410b8aef8e512616ba8aedc8"
     },
+    "gforce-github-actions": {
+      "source": "Gforce-Innovation-Kft/gforce-ai",
+      "sourceType": "github",
+      "skillPath": "skills/gforce-github-actions/SKILL.md",
+      "computedHash": "ae7dfd1e8fcb6393c932b682b6d8dad9e392bbc364d70a8aaa39920fa09a94f5"
+    },
     "github-actions-templates": {
       "source": "wshobson/agents",
       "sourceType": "github",
@@ -54,6 +60,12 @@
       "sourceType": "github",
       "skillPath": "skills/platform-metadata-deploy/SKILL.md",
       "computedHash": "5c17d46f25129f80d90a6217457410cec9fa95858dfbdb3b4fcf4beea4f227f5"
+    },
+    "salesforce-developer": {
+      "source": "Gforce-Innovation-Kft/gforce-ai",
+      "sourceType": "github",
+      "skillPath": "skills/salesforce-developer/SKILL.md",
+      "computedHash": "7010e6d62e8e25b218cf8df4d99333d47f3e8f47f0a9ce08a63939864a789b85"
     }
   }
 }
