@@ -1,6 +1,6 @@
 ---
-description: 'Guidelines and best practices for Apex development on the Salesforce Platform'
-applyTo: '**/*.cls, **/*.trigger'
+description: "Guidelines and best practices for Apex development on the Salesforce Platform"
+applyTo: "**/*.cls, **/*.trigger"
 ---
 
 # Apex Development
@@ -133,7 +133,7 @@ List<Account> accounts = [SELECT Id, Name FROM Account WHERE IsActive__c = true 
 ### Security and Data Access
 
 - **Always check CRUD/FLS permissions** before performing SOQL queries or DML operations.
-- Use `WITH SECURITY_ENFORCED` in SOQL queries to enforce field-level security.
+- Use `WITH USER_MODE` in SOQL queries — it enforces CRUD, FLS and sharing in one clause. (`WITH SECURITY_ENFORCED` enforces FLS only and is flagged in new code by `sf-code-reviewer`.)
 - Use `Security.stripInaccessible()` to remove fields the user cannot access.
 - Implement `WITH SHARING` keyword for classes that enforce sharing rules.
 - Use `WITHOUT SHARING` only when necessary and document the reason.
@@ -147,7 +147,7 @@ public with sharing class AccountService {
             throw new SecurityException('User does not have access to Account object');
         }
 
-        List<Account> accounts = [SELECT Id, Name, Industry FROM Account WITH SECURITY_ENFORCED];
+        List<Account> accounts = [SELECT Id, Name, Industry FROM Account WITH USER_MODE];
 
         SObjectAccessDecision decision = Security.stripInaccessible(
             AccessType.READABLE, accounts
@@ -173,19 +173,24 @@ public with sharing class AccountController {
 ```apex
 // Good Example - Proper exception handling
 public class AccountService {
-    public class AccountServiceException extends Exception {}
+  public class AccountServiceException extends Exception {
+  }
 
-    public static void safeUpdate(List<Account> accounts) {
-        try {
-            if (!Schema.sObjectType.Account.isUpdateable()) {
-                throw new AccountServiceException('User does not have permission to update accounts');
-            }
-            update accounts;
-        } catch (DmlException e) {
-            System.debug(LoggingLevel.ERROR, 'DML Error: ' + e.getMessage());
-            throw new AccountServiceException('Failed to update accounts: ' + e.getMessage());
-        }
+  public static void safeUpdate(List<Account> accounts) {
+    try {
+      if (!Schema.sObjectType.Account.isUpdateable()) {
+        throw new AccountServiceException(
+          'User does not have permission to update accounts'
+        );
+      }
+      update accounts;
+    } catch (DmlException e) {
+      System.debug(LoggingLevel.ERROR, 'DML Error: ' + e.getMessage());
+      throw new AccountServiceException(
+        'Failed to update accounts: ' + e.getMessage()
+      );
     }
+  }
 }
 ```
 
@@ -615,7 +620,7 @@ public class AccountSelector {
             SELECT Id, Name, AnnualRevenue, Rating
             FROM Account
             WHERE Id IN :accountIds
-            WITH SECURITY_ENFORCED
+            WITH USER_MODE
         ];
     }
 
@@ -624,7 +629,7 @@ public class AccountSelector {
             SELECT Id, Name, (SELECT Id, LastName FROM Contacts)
             FROM Account
             WHERE IsActive__c = true
-            WITH SECURITY_ENFORCED
+            WITH USER_MODE
         ];
     }
 }
@@ -745,7 +750,7 @@ public static String createExternalRecord(Map<String, Object> data) {
 public with sharing class AccountController {
     @AuraEnabled(cacheable=true)
     public static List<Account> getAccounts() {
-        return [SELECT Id, Name FROM Account WITH SECURITY_ENFORCED LIMIT 10];
+        return [SELECT Id, Name FROM Account WITH USER_MODE LIMIT 10];
     }
 
     @AuraEnabled
@@ -1023,85 +1028,94 @@ public class AccountCleanupScheduler implements Schedulable {
 // Good Example - Comprehensive test class
 @IsTest
 private class AccountServiceTest {
-    @TestSetup
-    static void setupTestData() {
-        List<Account> accounts = new List<Account>();
-        for (Integer i = 0; i < 200; i++) {
-            accounts.add(new Account(
-                Name = 'Test Account ' + i,
-                AnnualRevenue = i * 10000
-            ));
-        }
-        insert accounts;
+  @TestSetup
+  static void setupTestData() {
+    List<Account> accounts = new List<Account>();
+    for (Integer i = 0; i < 200; i++) {
+      accounts.add(
+        new Account(Name = 'Test Account ' + i, AnnualRevenue = i * 10000)
+      );
     }
+    insert accounts;
+  }
 
-    @IsTest
-    static void testUpdateAccountRatings_Positive() {
-        // Arrange
-        List<Account> accounts = [SELECT Id FROM Account];
-        Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
+  @IsTest
+  static void testUpdateAccountRatings_Positive() {
+    // Arrange
+    List<Account> accounts = [SELECT Id FROM Account];
+    Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
 
-        // Act
-        Test.startTest();
+    // Act
+    Test.startTest();
+    AccountService.updateAccountRatings(accountIds);
+    Test.stopTest();
+
+    // Assert
+    List<Account> updatedAccounts = [
+      SELECT Id, Rating
+      FROM Account
+      WHERE AnnualRevenue > 1000000
+    ];
+    for (Account acc : updatedAccounts) {
+      Assert.areEqual(
+        'Hot',
+        acc.Rating,
+        'Rating should be Hot for high revenue accounts'
+      );
+    }
+  }
+
+  @IsTest
+  static void testUpdateAccountRatings_NoAccess() {
+    // Create user with limited access
+    User testUser = createTestUser();
+
+    List<Account> accounts = [SELECT Id FROM Account LIMIT 1];
+    Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
+
+    Test.startTest();
+    System.runAs(testUser) {
+      try {
         AccountService.updateAccountRatings(accountIds);
-        Test.stopTest();
-
-        // Assert
-        List<Account> updatedAccounts = [
-            SELECT Id, Rating FROM Account WHERE AnnualRevenue > 1000000
-        ];
-        for (Account acc : updatedAccounts) {
-            Assert.areEqual('Hot', acc.Rating, 'Rating should be Hot for high revenue accounts');
-        }
+        Assert.fail('Expected SecurityException');
+      } catch (SecurityException e) {
+        Assert.isTrue(true, 'SecurityException thrown as expected');
+      }
     }
+    Test.stopTest();
+  }
 
-    @IsTest
-    static void testUpdateAccountRatings_NoAccess() {
-        // Create user with limited access
-        User testUser = createTestUser();
+  @IsTest
+  static void testBulkOperation() {
+    List<Account> accounts = [SELECT Id FROM Account];
+    Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
 
-        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];
-        Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
+    Test.startTest();
+    AccountService.updateAccountRatings(accountIds);
+    Test.stopTest();
 
-        Test.startTest();
-        System.runAs(testUser) {
-            try {
-                AccountService.updateAccountRatings(accountIds);
-                Assert.fail('Expected SecurityException');
-            } catch (SecurityException e) {
-                Assert.isTrue(true, 'SecurityException thrown as expected');
-            }
-        }
-        Test.stopTest();
-    }
+    List<Account> updatedAccounts = [SELECT Id, Rating FROM Account];
+    Assert.areEqual(
+      200,
+      updatedAccounts.size(),
+      'All accounts should be processed'
+    );
+  }
 
-    @IsTest
-    static void testBulkOperation() {
-        List<Account> accounts = [SELECT Id FROM Account];
-        Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
-
-        Test.startTest();
-        AccountService.updateAccountRatings(accountIds);
-        Test.stopTest();
-
-        List<Account> updatedAccounts = [SELECT Id, Rating FROM Account];
-        Assert.areEqual(200, updatedAccounts.size(), 'All accounts should be processed');
-    }
-
-    private static User createTestUser() {
-        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
-        return new User(
-            Alias = 'testuser',
-            Email = 'testuser@test.com',
-            EmailEncodingKey = 'UTF-8',
-            LastName = 'Testing',
-            LanguageLocaleKey = 'en_US',
-            LocaleSidKey = 'en_US',
-            ProfileId = p.Id,
-            TimeZoneSidKey = 'America/Los_Angeles',
-            UserName = 'testuser' + DateTime.now().getTime() + '@test.com'
-        );
-    }
+  private static User createTestUser() {
+    Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+    return new User(
+      Alias = 'testuser',
+      Email = 'testuser@test.com',
+      EmailEncodingKey = 'UTF-8',
+      LastName = 'Testing',
+      LanguageLocaleKey = 'en_US',
+      LocaleSidKey = 'en_US',
+      ProfileId = p.Id,
+      TimeZoneSidKey = 'America/Los_Angeles',
+      UserName = 'testuser' + DateTime.now().getTime() + '@test.com'
+    );
+  }
 }
 ```
 
@@ -1163,17 +1177,16 @@ if (accounts.size() > MAX_BATCH_SIZE) {
  * @description Service class for managing Account records
  */
 public with sharing class AccountService {
-
-    /**
-     * @author Your Name
-     * @date 2025-01-01
-     * @description Updates the rating for accounts based on annual revenue
-     * @param accountIds Set of Account IDs to update
-     * @throws AccountServiceException if user lacks update permissions
-     */
-    public static void updateAccountRatings(Set<Id> accountIds) {
-        // Implementation
-    }
+  /**
+   * @author Your Name
+   * @date 2025-01-01
+   * @description Updates the rating for accounts based on annual revenue
+   * @param accountIds Set of Account IDs to update
+   * @throws AccountServiceException if user lacks update permissions
+   */
+  public static void updateAccountRatings(Set<Id> accountIds) {
+    // Implementation
+  }
 }
 ```
 
