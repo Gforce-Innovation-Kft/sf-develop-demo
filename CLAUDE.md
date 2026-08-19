@@ -112,6 +112,23 @@ Version builds draw on a **6/day Dev Hub limit**; dependencies install in a fixe
 - LWC components: camelCase directory and file names (e.g., `weatherDashboard`)
 - Custom metadata: `Snake_Case__mdt` (e.g., `GitHub_App_Settings__mdt`)
 
+## Credentials — GitHub Environment secrets are a GCP-sourced replica
+
+The Salesforce JWT credentials `org-deploy-integration.yml`/`org-deploy-production.yml` pass into
+`sf-org-login` (`SF_JWT_KEY_B64` secret; `SF_USERNAME`, `SF_CLIENT_ID`, `SF_INSTANCE_URL`,
+`SF_ENV_LABEL` variables per Environment; repo-level `PRIVATE_KEY_GITHUB_BASE64` for the GitHub
+App used by `github-action-service`) are **not defined here**. Google Secret Manager, in
+[`gforce-google-infra`](https://github.com/Gforce-Innovation-Kft/gforce-google-infra), is the
+source of truth — its `modules/gh-secret-sync` Terraform module mirrors them into this repo's
+Environments on every apply, one-directionally (GCP → GitHub, never back).
+
+**Never hand-edit these values in this repo's Environment settings** — the next apply in
+`gforce-google-infra` reverts a manual change. To rotate a credential, follow that repo's
+`docs/SECRETS.md`. This is a stopgap for `credential-source: github-env`; once `sf-org-login`
+gains a `credential-source: gcp` branch (reading GCP directly via WIF at deploy time, not built
+yet), this repo can cut over and drop the mirrored copy entirely — see
+`docs/superpowers/specs/2026-08-19-github-secret-sync-design.md` in that repo.
+
 ## CI/CD
 
 `ci.yml` is the PR gate on `main`. It is two `uses:` and nothing else:
