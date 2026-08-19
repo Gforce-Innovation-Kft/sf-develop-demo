@@ -37,11 +37,39 @@ npm run prettier:verify     # check formatting without writing
 | `github-action-service/`                     | **yes** | GitHub integration: `GitHubDispatchService`, `GitHubAppAuthService`, event classes (`DataSyncEvent`, `DeploymentEvent`, `TestResultEvent`), `gitHubActionTrigger` LWC, Named Credentials, `GitHub_App_Settings__mdt` custom metadata |
 | `weather-app/`                               | no      | Weather demo: `Application.cls` factory, `IWeatherService`/`WeatherServiceImpl`, `WeatherReportsSelector`, `WeatherReports` domain, `WeatherDashboardController`, `weatherDashboard` LWC, `Weather_Report__c` custom object          |
 
+## fflib dependency — where to read the source
+
+fflib is **not** vendored into this repo. It is pinned as two git submodules tracking
+`apex-enterprise-patterns` upstream. After cloning, the directories are empty until you run:
+
+```bash
+git submodule update --init --recursive
+```
+
+**When you need fflib context** (base-class signatures, why `Application.cls` wires the way it
+does, what `fflib_QueryFactory` supports), read it on disk — do not guess from memory and do not
+fetch it from the web:
+
+| Need                                                                   | Read                                                                           |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `fflib_Application` (factory base: UnitOfWork/Service/Selector/Domain) | `fflib-apex-common/sfdx-source/apex-common/main/classes/fflib_Application.cls` |
+| `fflib_SObjectSelector`, `fflib_QueryFactory`                          | same dir, `fflib_SObjectSelector.cls` / `fflib_QueryFactory.cls`               |
+| `fflib_SObjectDomain`, `fflib_SObjectUnitOfWork`                       | same dir                                                                       |
+| Mocking API (`fflib_ApexMocks`, `fflib_IDGenerator`, matchers)         | `fflib-apex-mocks/sfdx-source/apex-mocks/main/classes/`                        |
+| Worked examples of the patterns                                        | `fflib-apex-common/sfdx-source/apex-common/test/classes/`                      |
+
+**Rules:**
+
+- Treat both submodules as **read-only third-party source**. Fixes go upstream, not here.
+- To move fflib forward: `git -C fflib-apex-common pull origin master`, then commit the new
+  submodule pointer in this repo. Re-run scratch-org validation after any bump.
+- CI checks out with `submodules: recursive`; without it the Apex build fails to compile.
+
 ## fflib Enterprise Architecture
 
-Four package directories: `apex-mocks/`, `apex-common/`, `github-action-service/` (default),
-`weather-app/`. Layers: Application factory → Service (interface + impl) → Selector → Domain →
-Unit of Work.
+Four package directories: `fflib-apex-mocks/`, `fflib-apex-common/` (both submodules),
+`github-action-service/` (default), `weather-app/`. Layers: Application factory → Service
+(interface + impl) → Selector → Domain → Unit of Work.
 
 **Detail: [`.claude/references/fflib-architecture.md`](.claude/references/fflib-architecture.md).**
 General standard: the `salesforce-developer` skill.
@@ -84,12 +112,40 @@ Version builds draw on a **6/day Dev Hub limit**; dependencies install in a fixe
 - LWC components: camelCase directory and file names (e.g., `weatherDashboard`)
 - Custom metadata: `Snake_Case__mdt` (e.g., `GitHub_App_Settings__mdt`)
 
+## Credentials — GitHub Environment secrets are a GCP-sourced replica
+
+The Salesforce JWT credentials `org-deploy-integration.yml`/`org-deploy-production.yml` pass into
+`sf-org-login` (`SF_JWT_KEY_B64` secret; `SF_USERNAME`, `SF_CLIENT_ID`, `SF_INSTANCE_URL`,
+`SF_ENV_LABEL` variables per Environment; repo-level `PRIVATE_KEY_GITHUB_BASE64` for the GitHub
+App used by `github-action-service`) are **not defined here**. Google Secret Manager, in
+[`gforce-google-infra`](https://github.com/Gforce-Innovation-Kft/gforce-google-infra), is the
+source of truth — its `modules/gh-secret-sync` Terraform module mirrors them into this repo's
+Environments on every apply, one-directionally (GCP → GitHub, never back).
+
+**Never hand-edit these values in this repo's Environment settings** — the next apply in
+`gforce-google-infra` reverts a manual change. To rotate a credential, follow that repo's
+`docs/SECRETS.md`. This is a stopgap for `credential-source: github-env`; once `sf-org-login`
+gains a `credential-source: gcp` branch (reading GCP directly via WIF at deploy time, not built
+yet), this repo can cut over and drop the mirrored copy entirely — see
+`docs/superpowers/specs/2026-08-19-github-secret-sync-design.md` in that repo.
+
 ## CI/CD
 
-GitHub Actions workflow `feature-validation.yml` runs on PRs to `main`:
+`ci.yml` is the PR gate on `main`. It is two `uses:` and nothing else:
 
-1. **Code quality job**: ESLint + Prettier checks
-2. **Validate feature job**: creates scratch org, deploys all source, assigns `Weather_Dashboard_Demo_Access` permset, runs Apex tests, validates metadata, then deletes the scratch org
+1. **Static analysis** — `reusable-sf-code-analyze.yml@v2` over `weather-app` and `github-action-service`
+2. **Scratch org validation** — `reusable-sf-pr-validate.yml@v2`, in `gforceinnovation/sf-ci:3.0.0` as UID 1001
+
+Ordered by cost: analysis needs no org, so a tree that fails it spends none of
+the Dev Hub's 3 concurrent scratch orgs.
+
+**No pipeline logic belongs in this repo.** `ci.yml` replaced
+`feature-validation.yml`, which inlined the whole thing — installing the SF CLI
+onto `ubuntu-latest`, hand-rolling a JWT login, duplicating what shared actions
+own. It was retired carrying three independent defects that a thin caller cannot
+have: a pinned Node 18 that could not parse the current SF CLI, a My Domain URL
+passed as the JWT audience, and no `permissions` block, so the step reporting
+failures could not report them.
 
 <!-- skills-tooling -->
 

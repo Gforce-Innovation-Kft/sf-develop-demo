@@ -1,0 +1,63 @@
+---
+# PR gate. Two `uses:` and nothing else.
+#
+# Replaces feature-validation.yml, which inlined the entire pipeline: it
+# installed the SF CLI onto ubuntu-latest, hand-rolled a JWT login, and
+# duplicated logic that now lives in shared-github-actions. That workflow had
+# been disabled_manually and was broken in three separate ways when it was
+# retired — a pinned Node 18 that could not parse the current SF CLI, a My
+# Domain URL passed as the JWT audience, and no `permissions` block, so the
+# step that reports failures failed to report them. None of those are possible
+# here, because none of that logic is in this repo any more.
+#
+# Nothing deploys to a long-lived org: validation happens in a throwaway
+# scratch org, so a bad pull request cannot reach integration or production.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code-analysis:
+    name: Static analysis
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/reusable-sf-code-analyze.yml@v2
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    with:
+      # Only our own packages. The fflib submodules are third-party source we
+      # do not edit, so analysing them is noise a reviewer has to scroll past.
+      workspace: "weather-app github-action-service"
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  validate:
+    name: Scratch org validation
+    # Ordered by cost, not dependency: static analysis needs no org, so a tree
+    # that fails it spends none of the Dev Hub's 3 concurrent scratch orgs.
+    needs: code-analysis
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/reusable-sf-pr-validate.yml@v2
+    permissions:
+      contents: read
+    with:
+      # Exact tag, never `latest` — the image is where the Node, SF CLI and
+      # Java versions come from, so an unpinned tag means the toolchain can
+      # change under a green build.
+      container-image: gforceinnovation/sf-ci:3.0.0
+      # 1001 is the runner UID. The shared workflow still defaults to root for
+      # consumers on older images; sf-ci 3.0.0 defaults to 1001 itself.
+      container-user: "1001"
+      # fflib-apex-common / fflib-apex-mocks are git submodules — without this
+      # the Apex build has no base classes and fails to compile.
+      checkout-submodules: recursive
+      # The shared default is config/scratch-orgs/ci.json; this repo keeps its
+      # definition at the SFDX-standard path.
+      scratch-org-definition: config/project-scratch-def.json
+    secrets:
+      sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}

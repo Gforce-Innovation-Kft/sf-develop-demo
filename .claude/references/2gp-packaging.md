@@ -8,11 +8,14 @@ the two things that most often go wrong — read both before packaging.
 Three **unlocked packages** are built from Dev Hub `gabor_dev`, chained by declared
 dependencies in `sfdx-project.json`:
 
-| Package             | Package Id (`0Ho`)   | 0.1.0-1 (`04t`)      | Depends on     |
-| ------------------- | -------------------- | -------------------- | -------------- |
-| `fflib-apex-mocks`  | `0HogL000000421dSAA` | `04tgL000000M0arQAC` | —              |
-| `fflib-apex-common` | `0HogL000000423FSAQ` | `04tgL000000M0cTQAS` | mocks          |
-| `weather-app`       | `0HogL000000426TSAQ` | `04tgL000000M26PQAS` | mocks + common |
+| Package             | Package Id (`0Ho`)   | Latest version (`04t`)          | Depends on     |
+| ------------------- | -------------------- | ------------------------------- | -------------- |
+| `fflib-apex-mocks`  | `0HogL000000421dSAA` | `04tgL000000M0arQAC` (0.1.0-1)  | —              |
+| `fflib-apex-common` | `0HogL000000423FSAQ` | `04tgL000000M0cTQAS` (0.1.0-1)  | mocks          |
+| `weather-app`       | `0HogL000000426TSAQ` | `04tgL000000M3X7QAK` (0.1.0-2)  | mocks + common |
+
+`weather-app@0.1.0-1` (`04tgL000000M26PQAS`) is still aliased and installable; 0.1.0-2 is the
+one the release flow last built.
 
 ```bash
 # build a new version (validated — draws on the 6/day Dev Hub limit)
@@ -22,7 +25,7 @@ sf package version create --package weather-app --installation-key-bypass \
 # install — dependencies first, in this order
 sf package install --package 04tgL000000M0arQAC --target-org <alias> --wait 20 --no-prompt
 sf package install --package 04tgL000000M0cTQAS --target-org <alias> --wait 20 --no-prompt
-sf package install --package weather-app@0.1.0-1 --target-org <alias> --wait 20 --no-prompt
+sf package install --package weather-app@0.1.0-2 --target-org <alias> --wait 20 --no-prompt
 ```
 
 **2GP dependencies are not transitive.** Salesforce installs exactly what a package declares —

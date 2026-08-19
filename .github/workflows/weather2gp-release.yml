@@ -1,0 +1,118 @@
+# weather2GP Release — thin caller.
+#
+# All logic lives in shared-github-actions, under the ADR 0002 names:
+#   .github/workflows/reusable-sf-package-release.yml   validate -> package -> release
+#   .github/actions/sf-org-scratch-create               org create + capacity preflight
+#   .github/actions/sf-package-create                   version create + provenance tag
+#   .github/actions/sf-org-login                        Dev Hub auth
+#
+# Budget: ONE scratch org per run (the validate job). The package job needs only
+# the Dev Hub. Dev Hub caps are ActiveScratchOrgs 3, DailyScratchOrgs 6, and
+# Package2VersionCreates 6/day — hence skip-validation as an escape hatch when
+# the validated pool is spent.
+#
+# Required secret: SFDX_AUTH_URL — Dev Hub (gabor_dev).
+#   sf org auth show-sfdx-auth-url --target-org gabor_dev --json | jq -rj '.result.sfdxAuthUrl'
+# `sf org display` no longer works for this: as of CLI 2.14x it redacts the field
+# to the literal string "[REDACTED] Use 'sf org auth show-sfdx-auth-url' to view",
+# which stores fine as a secret and fails at login with INVALID_SFDX_AUTH_URL.
+# Use `jq -rj`, not `-r` — a trailing newline in the secret is its own failure.
+#
+# Optional secret: SCRATCH_ORG_AUTH_URL — a long-lived scratch org to validate in
+# when dispatched with reuse-scratch-org: true, so debugging this flow does not
+# spend one scratch org per iteration.
+
+name: weather2GP Release
+
+# The e2e-run-id suffix is how an external caller correlates its dispatch with
+# the run it produced: `gh workflow run` returns no run id, and picking "the
+# most recent run" races when two dispatches overlap.
+run-name: >-
+  weather2GP Release${{ inputs.e2e-run-id && format(' [e2e {0}]', inputs.e2e-run-id) || '' }}
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run-validate:
+        description: "Run the scratch-org validation job (costs 1 scratch org)"
+        required: false
+        default: true
+        type: boolean
+      skip-validation:
+        description: "Build with --skip-validation (500/day pool instead of the 6/day one)"
+        required: false
+        default: false
+        type: boolean
+      create-github-release:
+        description: "Cut a GitHub Release on the provenance tag"
+        required: false
+        default: true
+        type: boolean
+      reuse-scratch-org:
+        description: "Validate in the pre-authorised debug org (SCRATCH_ORG_AUTH_URL) instead of creating one"
+        required: false
+        default: false
+        type: boolean
+      container-image:
+        description: "Docker image the Salesforce jobs run in. Overridden by the sf-docker-images E2E to test a candidate image before it is published."
+        required: false
+        default: "gforceinnovation/sf-ci:latest"
+        type: string
+      container-user:
+        description: 'Container job user. "1001" runs unprivileged as the runner UID; "root" is the legacy behaviour.'
+        required: false
+        default: "root"
+        type: string
+      e2e-run-id:
+        description: "Correlation id supplied by an external caller so it can find this run. Surfaced in run-name; has no effect on the release itself."
+        required: false
+        default: ""
+        type: string
+
+# Never cancel in progress: a cancelled run can orphan a scratch org and abandon
+# a package version create that has already consumed daily quota.
+concurrency:
+  group: weather2gp-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # @v2, not @v1. The v1 tag predates every Salesforce action in
+    # shared-github-actions — it carries only the four original workflows — so
+    # @v1 fails to resolve before a single step runs. ADR 0002 renamed this file
+    # to reusable-sf-package-release.yml, and v2 is the tag that carries the new
+    # names. It was briefly pinned to @develop; that branch was merged and
+    # deleted on 2026-08-06, so nothing may reference it.
+    uses: Gforce-Innovation-Kft/shared-github-actions/.github/workflows/reusable-sf-package-release.yml@v2
+    permissions:
+      contents: write
+    with:
+      package: weather-app
+      scratch-org-definition: config/project-scratch-def.json
+      # Deploy only what this release needs. Omitting this deploys every
+      # packageDirectories entry, and github-action-service has a `replacements`
+      # block requiring GITHUB_PRIVATE_KEY_BASE64, which CI does not set.
+      source-dirs: >-
+        fflib-apex-mocks/sfdx-source/apex-mocks
+        fflib-apex-common/sfdx-source/apex-common
+        weather-app
+      # On a push event `inputs` is null, and GitHub casts both null and false
+      # to 0 — so `inputs.x != false` would be FALSE on every push. Gate on the
+      # event name so push gets the intended defaults.
+      run-validate: ${{ github.event_name != 'workflow_dispatch' || inputs.run-validate }}
+      # weather-app ships no Apex test classes, so coverage computes to 0% and
+      # only costs build time. Unlocked packages have no coverage gate.
+      code-coverage: false
+      skip-validation: ${{ github.event_name == 'workflow_dispatch' && inputs.skip-validation }}
+      create-github-release: ${{ github.event_name != 'workflow_dispatch' || inputs.create-github-release }}
+      # On a push event `inputs` is null, so fall back to the published image
+      # and the legacy privileged user rather than passing an empty string.
+      container-image: ${{ (github.event_name == 'workflow_dispatch' && inputs.container-image) || 'gforceinnovation/sf-ci:latest' }}
+      container-user: ${{ (github.event_name == 'workflow_dispatch' && inputs.container-user) || 'root' }}
+    secrets:
+      sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
+      # Only forwarded when explicitly asked for, so a normal run can never
+      # accidentally validate in — and leave behind — the debug org.
+      scratch-org-auth-url: ${{ (github.event_name == 'workflow_dispatch' && inputs.reuse-scratch-org) && secrets.SCRATCH_ORG_AUTH_URL || '' }}
