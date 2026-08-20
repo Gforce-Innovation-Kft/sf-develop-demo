@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   # ============================================================
   # RUNNER 1: pi5-runners (basic)
   # Default ARC image — no Docker, no SF CLI
@@ -25,7 +24,7 @@ jobs:
           free -h
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Git info
         run: |

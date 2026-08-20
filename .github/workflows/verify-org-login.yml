@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # The private key is the only secret. Username, login url and consumer
       # key are variables: in the JWT bearer flow they are inert without the
