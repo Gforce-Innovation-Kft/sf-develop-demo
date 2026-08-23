@@ -1,16 +1,33 @@
 {
   "name": "Salesforce Development",
   "image": "gforceinnovation/sf-devcontainer:latest",
+
+  // Org auth lives in named Docker volumes, NOT a bind mount of the host's
+  // ~/.sf or ~/.sfdx. Those files are encrypted with the HOST OS's keychain
+  // (e.g. macOS Keychain), which this Linux container cannot read — bind-mounting
+  // them in causes every org to fail `sf org list` with AuthDecryptError. Log in
+  // once *inside* the container (see .devcontainer/post-create.sh); the named
+  // volumes below keep it there across rebuilds, isolated from host credentials.
+  "mounts": [
+    "source=sf-develop-demo-sf-config,target=/home/vscode/.sf,type=volume",
+    "source=sf-develop-demo-sfdx-config,target=/home/vscode/.sfdx,type=volume",
+    "source=sf-develop-demo-history,target=/commandhistory,type=volume"
+  ],
+
+  // Fallback alias used by post-create.sh when the resolved target-org is not
+  // authorized in this container. That happens routinely: the workspace is
+  // bind-mounted, so a host-side /workspace/.sf/config.json reads as sf's
+  // *Local* config and outranks the volume's Global config — pointing at an
+  // org only the host can reach. Keep this a durable org (the Dev Hub), not a
+  // scratch org alias, so it does not rot when the scratch org expires.
+  "containerEnv": {
+    "SF_DEFAULT_ORG_ALIAS": "gabor_dev"
+  },
+
   "customizations": {
     "vscode": {
       "extensions": [
-        "salesforce.salesforcedx-vscode-core",
-        "salesforce.salesforcedx-vscode-apex",
-        "salesforce.salesforcedx-vscode-apex-debugger",
-        "salesforce.salesforcedx-vscode-apex-replay-debugger",
-        "salesforce.salesforcedx-vscode-lightning",
-        "salesforce.salesforcedx-vscode-lwc",
-        "salesforce.salesforcedx-vscode-soql",
+        "salesforce.salesforcedx-vscode-expanded",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "redhat.vscode-xml",
@@ -19,17 +36,12 @@
       "settings": {
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.profiles.linux": {
-          "zsh": {
-            "path": "/bin/zsh"
-          }
+          "zsh": { "path": "/bin/zsh" }
         }
       }
     }
   },
+
   "remoteUser": "vscode",
-  "postCreateCommand": "npm install",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  }
+  "postCreateCommand": "sudo chown vscode:vscode /commandhistory 2>/dev/null; npm install && .devcontainer/post-create.sh"
 }
