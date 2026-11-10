@@ -1,71 +1,77 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "dx-org-manage": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/dx-org-manage/SKILL.md",
-      "computedHash": "e87af46049f1810a82f26e3723e569f30cbac1ea09e0cf7b6c67cd60a092eb28"
+      "computedHash": "949f9b08570588450f6ce3bd8ab0f33493d87391e5e4c398b185bb639488f6ca"
     },
     "dx-org-permission-set-assign": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/dx-org-permission-set-assign/SKILL.md",
-      "computedHash": "b1d3727d4352e05d1e02ad8be5d5db0ac4fb688c605eea8d7d76c9acb8754d9d"
+      "computedHash": "408b52deb56f683b451f930ba460008170e03e066f7485d57f1513d9139bffb6"
     },
     "dx-pkg-post-install-configure": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/dx-pkg-post-install-configure/SKILL.md",
-      "computedHash": "30dd5bea1d8ed3a73c319ed04b766f208629dd7a8cd788b66302352495895792"
+      "computedHash": "ded5280e8495c3943ec206a1440b98be6fdec09f1f5607e2bcfdee832ea84c99"
     },
     "experience-lwc-generate": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/experience-lwc-generate/SKILL.md",
-      "computedHash": "ca0a4d4d212fa1a70e9eaa7b059294cfcd42ce911c9d521157e392cc3cee8976"
+      "computedHash": "4a659894bf2d82405446c8d82d351f3926b6fd80c5ff069ac8080dfd105f9fc8"
     },
     "gforce-github-actions": {
       "source": "Gforce-Innovation-Kft/gforce-ai",
       "sourceType": "github",
       "skillPath": "skills/gforce-github-actions/SKILL.md",
-      "computedHash": "ae7dfd1e8fcb6393c932b682b6d8dad9e392bbc364d70a8aaa39920fa09a94f5"
+      "computedHash": "7b08e4945ce8423d8b839e21bcb1190057a0b168d524f8cb15b9a76b98266b92"
+    },
+    "gforce-google-cloud": {
+      "source": "Gforce-Innovation-Kft/gforce-ai",
+      "sourceType": "github",
+      "skillPath": "skills/gforce-google-cloud/SKILL.md",
+      "computedHash": "15c8395eba34ff1e9d0aa42ea2f1de50b60a0e148f0324f91c23da33576e936b"
     },
     "github-actions-templates": {
       "source": "wshobson/agents",
       "sourceType": "github",
       "skillPath": "plugins/cicd-automation/skills/github-actions-templates/SKILL.md",
-      "computedHash": "93e92fd674dea084628e95f9c48af806f9672ac08f815c84f85adedb55742c59"
+      "computedHash": "a64693f40a4fbc1177efeb42b5f2a406c74d68bb40488a5bcaafd1537bbd0225"
     },
     "platform-apex-logs-debug": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-apex-logs-debug/SKILL.md",
-      "computedHash": "d1fb40641d5cd2a9c6ac4bdca948cf1b53b91a6652cb7d6a7ec31d40ff9946d9"
+      "computedHash": "864fc8c2b8019733ddb443c6f448dcb2af2999725046f117f3a3be82879e8660"
     },
     "platform-apex-test-run": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-apex-test-run/SKILL.md",
-      "computedHash": "210f1721020873024bf9c04f58b35694aae7427dd6b282f04c60f74cbd8b32cc"
+      "computedHash": "641700365d63a9e6c4b4536549c2e078a683e6c431c87803a4587ba9138029f4"
     },
     "platform-docs-get": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-docs-get/SKILL.md",
-      "computedHash": "1e7dfd5fde5e9fc5dfa21d0565a546ae160ccdcef684b49b9afc94adcbe233f3"
+      "computedHash": "631cdbd23df78e4f6273bb17715843c13ba6d617de29fc24480cb8f3dc837d0b"
     },
     "platform-metadata-deploy": {
       "source": "forcedotcom/sf-skills",
       "sourceType": "github",
       "skillPath": "skills/platform-metadata-deploy/SKILL.md",
-      "computedHash": "7f3671bfbed50639148def6951c09a2e430cb8e5514970628e1a02cf02c84c6b"
+      "computedHash": "981ef8a595329cec95ab49c125502d6bb69707750b0b73b5b531d8cb6b7e2f5b"
     },
     "salesforce-developer": {
       "source": "Gforce-Innovation-Kft/gforce-ai",
       "sourceType": "github",
       "skillPath": "skills/salesforce-developer/SKILL.md",
-      "computedHash": "13bfd22c0a7eda4d75113ca8c97415eb56afa020476760f1fd446eda0c27880a"
+      "computedHash": "0f0f0e5dea38760ea2dbfc0fee36e2d508fbf10d3696bb090428b2ebf003364d"
     }
   }
 }
