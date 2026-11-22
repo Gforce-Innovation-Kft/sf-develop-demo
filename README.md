@@ -1,5 +1,7 @@
 # Salesforce Development Demo
 
+> **GForce catalog:** Demo · status: `active` — **Owns:** SFDX + fflib + GitHub App JWT demo deployed by the shared pipelines; to be redefined on a Salesforce sample app (e.g. Dreamhouse). **Not:** reusable pipelines (→ shared-github-actions).
+
 A comprehensive Salesforce DX project showcasing enterprise-grade integrations, security best practices, and modern development patterns.
 
 ## 🚀 Features
