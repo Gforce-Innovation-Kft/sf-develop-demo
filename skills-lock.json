@@ -25,12 +25,6 @@
       "skillPath": "skills/experience-lwc-generate/SKILL.md",
       "computedHash": "ca0a4d4d212fa1a70e9eaa7b059294cfcd42ce911c9d521157e392cc3cee8976"
     },
-    "gforce-github-actions": {
-      "source": "Gforce-Innovation-Kft/gforce-ai",
-      "sourceType": "github",
-      "skillPath": "skills/gforce-github-actions/SKILL.md",
-      "computedHash": "ae7dfd1e8fcb6393c932b682b6d8dad9e392bbc364d70a8aaa39920fa09a94f5"
-    },
     "github-actions-templates": {
       "source": "wshobson/agents",
       "sourceType": "github",

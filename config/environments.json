@@ -1,0 +1,9 @@
+{
+  "environments": [
+    {
+      "alias": "github1",
+      "kind": "developer",
+      "agentWrite": false
+    }
+  ]
+}
